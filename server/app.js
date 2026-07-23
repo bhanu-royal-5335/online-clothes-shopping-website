@@ -56,6 +56,19 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/users', userRoutes);
 
+// Welcome landing route for API root
+app.get('/', (req, res) => {
+  res.send(`
+    <div style="font-family: sans-serif; text-align: center; padding: 50px; background-color: #0a0a0a; color: #fff; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0;">
+      <h1 style="color: #d4af37; font-size: 2.5rem; margin-bottom: 10px;">Rainbow Fashions API</h1>
+      <p style="color: #a0a0a0; font-size: 1.1rem; max-width: 500px; line-height: 1.6;">
+        The Express backend server is running successfully. Please access the React frontend client application to experience the store interface.
+      </p>
+      <a href="/api/health" style="margin-top: 20px; color: #d4af37; font-weight: bold; text-decoration: none; border: 1px solid #d4af37; padding: 8px 16px; rounded: 8px;">Check Health Status</a>
+    </div>
+  `);
+});
+
 // Basic health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
