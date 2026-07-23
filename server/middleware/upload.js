@@ -70,7 +70,7 @@ const uploadImage = async (file) => {
   }
 
   // Local storage fallback: Return relative URL path
-  const host = process.env.CLIENT_URL ? 'http://localhost:5000' : '';
+  const host = process.env.CLIENT_URL ? 'https://rainbow-fashions-api.onrender.com' : '';
   const relativePath = `/uploads/${path.basename(file.path)}`;
   return relativePath;
 };
