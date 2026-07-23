@@ -1,0 +1,17 @@
+# Dependencies
+**/node_modules/
+**/dist/
+**/.env
+
+# Local system configuration
+.gemini/
+.agents/
+
+# Logs
+**/logs/
+**/*.log
+**/npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
