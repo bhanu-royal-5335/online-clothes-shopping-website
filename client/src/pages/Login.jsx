@@ -128,7 +128,7 @@ const Login = () => {
         <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 p-4 rounded-2xl text-xs text-slate-500 space-y-1.5">
           <p className="font-extrabold uppercase text-slate-450 tracking-wider">Developer Demo Logins:</p>
           <p>• Customer: <span className="font-semibold text-slate-700 dark:text-slate-300">customer@rainbowfashions.com</span> (pw: <span className="font-mono">customer123password</span>)</p>
-          <p>• Admin: <span className="font-semibold text-slate-700 dark:text-slate-300">admin@rainbowfashions.com</span> (pw: <span className="font-mono">admin123password</span>)</p>
+          <p>• Admin: <span className="font-semibold text-slate-700 dark:text-slate-300">bhanuroyal177@gmail.com</span> (pw: <span className="font-mono">admin123password</span>)</p>
         </div>
 
         {/* Footnote */}
