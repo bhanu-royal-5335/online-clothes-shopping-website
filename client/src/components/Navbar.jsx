@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import CurrencySelector from './CurrencySelector';
 import {
   Shirt,
   ShoppingCart,
@@ -170,10 +171,12 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Action Icons */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            
-            {/* Theme Toggle */}
+          {/* Right Action Icons */}
+          <div className="flex items-center space-x-3">
+            {/* Live Multi-Currency Switcher */}
+            <CurrencySelector />
+
+            {/* Light / Dark Mode Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
               className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"

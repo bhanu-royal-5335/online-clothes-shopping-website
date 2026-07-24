@@ -16,6 +16,7 @@ import Orders from './pages/Orders';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
+import VendorDashboard from './pages/VendorDashboard';
 
 function App() {
   return (
@@ -68,12 +69,20 @@ function App() {
             }
           />
 
-          {/* Admin Restricted Routes */}
+          {/* Admin & Seller Restricted Routes */}
           <Route
             path="/admin"
             element={
               <ProtectedRoute adminOnly={true}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor"
+            element={
+              <ProtectedRoute>
+                <VendorDashboard />
               </ProtectedRoute>
             }
           />

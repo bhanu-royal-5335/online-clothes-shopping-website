@@ -72,6 +72,8 @@ app.use('/api', apiLimiter);
 // Expose public static upload directory for product images fallback
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+const vendorRoutes = require('./routes/vendorRoutes');
+
 // Core api routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -79,6 +81,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/vendors', vendorRoutes);
 
 // Welcome landing route for API root
 app.get('/', (req, res) => {
