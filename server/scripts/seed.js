@@ -29,8 +29,8 @@ const seedData = async () => {
 
     // 1. Seed Users
     const adminUser = await User.create({
-      name: 'Admin User',
-      email: 'admin@rainbowfashions.com',
+      name: 'Y Bhanu Prakash',
+      email: 'bhanuroyal177@gmail.com',
       password: 'admin123password',
       role: 'admin',
       isVerified: true,
