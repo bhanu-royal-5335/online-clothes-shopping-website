@@ -100,7 +100,7 @@ const Home = () => {
             </div>
             <div>
               <h3 className="font-bold text-slate-800 dark:text-white">Ultra Fast Delivery</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Get local free shipping on all orders totaling over $100.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Get local free shipping on all orders totaling over ₹999.</p>
             </div>
           </div>
           <div className="flex items-start space-x-4 p-6 bg-white dark:bg-slate-850 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">

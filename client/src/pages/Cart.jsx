@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, Percent } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, Percent, MessageCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { formatCurrency } from '../utils/formatCurrency';
+import { getCartWhatsAppUrl } from '../utils/whatsapp';
 
 const Cart = () => {
   const {
@@ -93,7 +95,7 @@ const Cart = () => {
                       )}
                     </div>
                   )}
-                  <p className="text-xs text-slate-450 font-semibold">${item.price.toFixed(2)} each</p>
+                  <p className="text-xs text-slate-450 font-semibold">{formatCurrency(item.price)} each</p>
                 </div>
 
                 {/* Quantity Controls */}
@@ -115,7 +117,7 @@ const Cart = () => {
 
                 {/* Item Subtotal Price */}
                 <div className="text-right min-w-20 font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                  ${(item.price * item.qty).toFixed(2)}
+                  {formatCurrency(item.price * item.qty)}
                 </div>
 
                 {/* Trash trigger */}
@@ -193,40 +195,52 @@ const Cart = () => {
             <div className="space-y-2.5 text-sm">
               <div className="flex justify-between text-slate-500">
                 <span>Subtotal</span>
-                <span>${itemsPrice.toFixed(2)}</span>
+                <span>{formatCurrency(itemsPrice)}</span>
               </div>
 
               {discountPrice > 0 && (
                 <div className="flex justify-between text-emerald-600">
                   <span>Discount ({appliedCoupon?.code})</span>
-                  <span>-${discountPrice.toFixed(2)}</span>
+                  <span>-{formatCurrency(discountPrice)}</span>
                 </div>
               )}
 
               <div className="flex justify-between text-slate-500">
                 <span>Shipping Cost</span>
-                <span>{shippingPrice === 0 ? 'Free' : `$${shippingPrice.toFixed(2)}`}</span>
+                <span>{shippingPrice === 0 ? 'Free' : formatCurrency(shippingPrice)}</span>
               </div>
 
               <div className="flex justify-between text-slate-500">
                 <span>Estimated Sales Tax (8%)</span>
-                <span>${taxPrice.toFixed(2)}</span>
+                <span>{formatCurrency(taxPrice)}</span>
               </div>
 
               <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-between text-slate-900 dark:text-white font-extrabold text-base sm:text-lg">
                 <span>Grand Total</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>{formatCurrency(totalPrice)}</span>
               </div>
             </div>
 
             {/* Checkout CTA */}
-            <Link
-              to="/checkout"
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-2xl shadow-md shadow-primary-500/10 flex items-center justify-center space-x-2 hover:scale-102 transition-all"
-            >
-              <span>Proceed to Checkout</span>
-              <ArrowRight className="h-4.5 w-4.5" />
-            </Link>
+            <div className="space-y-3">
+              <Link
+                to="/checkout"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-2xl shadow-md shadow-primary-500/10 flex items-center justify-center space-x-2 hover:scale-102 transition-all text-sm"
+              >
+                <span>Proceed to Checkout</span>
+                <ArrowRight className="h-4.5 w-4.5" />
+              </Link>
+
+              <a
+                href={getCartWhatsAppUrl(cartItems, totalPrice)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-2xl shadow-md shadow-emerald-600/10 flex items-center justify-center space-x-2 hover:scale-102 transition-all text-sm"
+              >
+                <MessageCircle className="h-4.5 w-4.5 fill-white text-emerald-600" />
+                <span>Order via WhatsApp</span>
+              </a>
+            </div>
           </div>
         </div>
 

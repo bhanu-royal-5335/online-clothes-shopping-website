@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Package, MapPin, Calendar, Clock, CreditCard, ChevronRight, Printer, AlertTriangle } from 'lucide-react';
 import api from '../utils/api';
+import { formatCurrency } from '../utils/formatCurrency';
 import { TableSkeleton } from '../components/SkeletonLoader';
 import toast from 'react-hot-toast';
 
@@ -127,7 +128,7 @@ const Orders = () => {
                     </div>
                   </div>
                   <div className="text-right flex items-center space-x-2">
-                    <span className="font-extrabold text-sm text-slate-900 dark:text-white">${ord.totalPrice.toFixed(2)}</span>
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white">{formatCurrency(ord.totalPrice)}</span>
                     <ChevronRight className="h-4.5 w-4.5 text-slate-350" />
                   </div>
                 </button>
@@ -233,13 +234,13 @@ const Orders = () => {
                         <div className="min-w-0">
                           <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</h4>
                           <p className="text-xs text-slate-400">
-                            {item.qty} × ${item.price.toFixed(2)}
+                            {item.qty} × {formatCurrency(item.price)}
                             {item.size || item.color ? ` | ${[item.size, item.color].filter(Boolean).join(' / ')}` : ''}
                           </p>
                         </div>
                       </div>
                       <span className="font-bold text-slate-850 dark:text-white text-sm">
-                        ${(item.price * item.qty).toFixed(2)}
+                        {formatCurrency(item.price * item.qty)}
                       </span>
                     </div>
                   ))}
@@ -249,25 +250,25 @@ const Orders = () => {
                 <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2 text-xs text-slate-500">
                   <div className="flex justify-between">
                     <span>Items Subtotal</span>
-                    <span>${selectedOrder.itemsPrice.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedOrder.itemsPrice)}</span>
                   </div>
                   {selectedOrder.discountPrice > 0 && (
                     <div className="flex justify-between text-emerald-600">
                       <span>Applied Discounts</span>
-                      <span>-${selectedOrder.discountPrice.toFixed(2)}</span>
+                      <span>-{formatCurrency(selectedOrder.discountPrice)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
                     <span>Shipping fee</span>
-                    <span>${selectedOrder.shippingPrice.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedOrder.shippingPrice)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Sales Tax (8%)</span>
-                    <span>${selectedOrder.taxPrice.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedOrder.taxPrice)}</span>
                   </div>
                   <div className="border-t border-slate-100 dark:border-slate-800 pt-2.5 flex justify-between text-sm font-extrabold text-slate-900 dark:text-white">
                     <span>Total Balance</span>
-                    <span>${selectedOrder.totalPrice.toFixed(2)}</span>
+                    <span>{formatCurrency(selectedOrder.totalPrice)}</span>
                   </div>
                 </div>
               </div>
@@ -370,8 +371,8 @@ const Orders = () => {
                         ) : null}
                       </td>
                       <td className="p-3 text-center">{item.qty}</td>
-                      <td className="p-3 text-right">${item.price.toFixed(2)}</td>
-                      <td className="p-3 text-right font-bold">${(item.price * item.qty).toFixed(2)}</td>
+                      <td className="p-3 text-right">{formatCurrency(item.price)}</td>
+                      <td className="p-3 text-right font-bold">{formatCurrency(item.price * item.qty)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -381,25 +382,25 @@ const Orders = () => {
               <div className="w-60 ml-auto space-y-2 text-xs">
                 <div className="flex justify-between text-slate-500">
                   <span>Subtotal:</span>
-                  <span>${invoiceOrder.itemsPrice.toFixed(2)}</span>
+                  <span>{formatCurrency(invoiceOrder.itemsPrice)}</span>
                 </div>
                 {invoiceOrder.discountPrice > 0 && (
                   <div className="flex justify-between text-emerald-600">
                     <span>Discount:</span>
-                    <span>-${invoiceOrder.discountPrice.toFixed(2)}</span>
+                    <span>-{formatCurrency(invoiceOrder.discountPrice)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-slate-500">
                   <span>Shipping:</span>
-                  <span>${invoiceOrder.shippingPrice.toFixed(2)}</span>
+                  <span>{formatCurrency(invoiceOrder.shippingPrice)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500">
                   <span>Tax (8%):</span>
-                  <span>${invoiceOrder.taxPrice.toFixed(2)}</span>
+                  <span>{formatCurrency(invoiceOrder.taxPrice)}</span>
                 </div>
                 <div className="flex justify-between font-extrabold text-sm border-t border-slate-200/60 dark:border-slate-800 pt-2 text-slate-900 dark:text-white">
                   <span>Grand Total:</span>
-                  <span>${invoiceOrder.totalPrice.toFixed(2)}</span>
+                  <span>{formatCurrency(invoiceOrder.totalPrice)}</span>
                 </div>
               </div>
 

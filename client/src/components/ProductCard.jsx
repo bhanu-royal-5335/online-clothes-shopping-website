@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { formatCurrency } from '../utils/formatCurrency';
 import toast from 'react-hot-toast';
 
 const ProductCard = ({ product }) => {
@@ -136,15 +137,15 @@ const ProductCard = ({ product }) => {
             {product.discountPrice ? (
               <div className="flex items-center space-x-1.5">
                 <span className="text-lg font-bold text-slate-900 dark:text-white">
-                  ${product.discountPrice.toFixed(2)}
+                  {formatCurrency(product.discountPrice)}
                 </span>
                 <span className="text-sm text-slate-400 dark:text-slate-500 line-through">
-                  ${product.price.toFixed(2)}
+                  {formatCurrency(product.price)}
                 </span>
               </div>
             ) : (
               <span className="text-lg font-bold text-slate-900 dark:text-white">
-                ${product.price.toFixed(2)}
+                {formatCurrency(product.price)}
               </span>
             )}
           </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CreditCard, CheckCircle2, ChevronRight, Truck, Wallet, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { formatCurrency } from '../utils/formatCurrency';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 
@@ -366,12 +367,12 @@ const Checkout = () => {
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</h4>
                     <p className="text-[10px] text-slate-400">
-                      {item.qty} × ${item.price.toFixed(2)}
+                      {item.qty} × {formatCurrency(item.price)}
                       {item.size || item.color ? ` | ${[item.size, item.color].filter(Boolean).join(' / ')}` : ''}
                     </p>
                   </div>
                   <span className="text-xs font-bold text-slate-850 dark:text-slate-200">
-                    ${(item.price * item.qty).toFixed(2)}
+                    {formatCurrency(item.price * item.qty)}
                   </span>
                 </div>
               ))}
@@ -381,29 +382,29 @@ const Checkout = () => {
             <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs">
               <div className="flex justify-between text-slate-500">
                 <span>Items Subtotal</span>
-                <span>${itemsPrice.toFixed(2)}</span>
+                <span>{formatCurrency(itemsPrice)}</span>
               </div>
 
               {discountPrice > 0 && (
                 <div className="flex justify-between text-emerald-600">
                   <span>Promo Discount</span>
-                  <span>-${discountPrice.toFixed(2)}</span>
+                  <span>-{formatCurrency(discountPrice)}</span>
                 </div>
               )}
 
               <div className="flex justify-between text-slate-500">
                 <span>Shipping Cost</span>
-                <span>{shippingPrice === 0 ? 'Free' : `$${shippingPrice.toFixed(2)}`}</span>
+                <span>{shippingPrice === 0 ? 'Free' : formatCurrency(shippingPrice)}</span>
               </div>
 
               <div className="flex justify-between text-slate-500">
                 <span>Estimated Sales Tax (8%)</span>
-                <span>${taxPrice.toFixed(2)}</span>
+                <span>{formatCurrency(taxPrice)}</span>
               </div>
 
               <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-between text-slate-900 dark:text-white font-extrabold text-base">
                 <span>Total Balance Due</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>{formatCurrency(totalPrice)}</span>
               </div>
             </div>
 

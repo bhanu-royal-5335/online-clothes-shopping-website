@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, ShieldCheck, Heart, Truck, RefreshCw, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { Star, ShieldCheck, Heart, Truck, RefreshCw, ShoppingCart, Plus, Minus, MessageCircle } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { formatCurrency } from '../utils/formatCurrency';
+import { getProductWhatsAppUrl } from '../utils/whatsapp';
 import toast from 'react-hot-toast';
 
 const ProductDetails = () => {
@@ -189,15 +191,15 @@ const ProductDetails = () => {
             {product.discountPrice ? (
               <>
                 <span className="text-3xl font-extrabold text-slate-900 dark:text-white">
-                  ${product.discountPrice.toFixed(2)}
+                  {formatCurrency(product.discountPrice)}
                 </span>
                 <span className="text-lg text-slate-400 line-through">
-                  ${product.price.toFixed(2)}
+                  {formatCurrency(product.price)}
                 </span>
               </>
             ) : (
               <span className="text-3xl font-extrabold text-slate-900 dark:text-white">
-                ${product.price.toFixed(2)}
+                {formatCurrency(product.price)}
               </span>
             )}
           </div>
@@ -279,13 +281,25 @@ const ProductDetails = () => {
                 </button>
               </div>
 
-              <button
-                onClick={handleAddToCart}
-                className="w-full sm:flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-primary-500/10 hover:scale-105 active:scale-95 flex items-center justify-center space-x-2.5 transition-all"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                <span>Add to Shopping Cart</span>
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:flex-1">
+                <button
+                  onClick={handleAddToCart}
+                  className="w-full sm:flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-primary-500/10 hover:scale-102 active:scale-95 flex items-center justify-center space-x-2 transition-all text-sm"
+                >
+                  <ShoppingCart className="h-4.5 w-4.5" />
+                  <span>Add to Cart</span>
+                </button>
+
+                <a
+                  href={getProductWhatsAppUrl(product, selectedSize, selectedColor)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-emerald-600/10 hover:scale-102 active:scale-95 flex items-center justify-center space-x-2 transition-all text-sm"
+                >
+                  <MessageCircle className="h-4.5 w-4.5 fill-white text-emerald-600" />
+                  <span>Order on WhatsApp</span>
+                </a>
+              </div>
             </div>
           )}
 

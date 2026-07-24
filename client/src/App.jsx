@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import WhatsAppButton from './components/WhatsAppButton';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Home from './pages/Home';
@@ -96,6 +97,9 @@ function App() {
 
       {/* Global Footer */}
       <Footer />
+
+      {/* Floating WhatsApp Quick Contact */}
+      <WhatsAppButton />
     </div>
   );
 }

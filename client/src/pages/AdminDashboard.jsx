@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../utils/api';
+import { formatCurrency } from '../utils/formatCurrency';
 import { StatsSkeleton, TableSkeleton } from '../components/SkeletonLoader';
 import toast from 'react-hot-toast';
 
@@ -414,7 +415,7 @@ const AdminDashboard = () => {
                         <span className="text-xs font-bold uppercase tracking-wider">Total Sales Revenue</span>
                         <TrendingUp className="h-5 w-5 text-emerald-500" />
                       </div>
-                      <p className="text-2xl font-extrabold text-slate-900 dark:text-white">${stats.metrics.totalSales.toFixed(2)}</p>
+                      <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{formatCurrency(stats.metrics.totalSales)}</p>
                     </div>
 
                     <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-2">
@@ -547,11 +548,11 @@ const AdminDashboard = () => {
                           <td className="p-4 font-bold">
                             {p.discountPrice ? (
                               <div className="flex flex-col">
-                                <span className="text-slate-850 dark:text-white">${p.discountPrice.toFixed(2)}</span>
-                                <span className="text-[10px] text-slate-400 line-through">${p.price.toFixed(2)}</span>
+                                <span className="text-slate-850 dark:text-white">{formatCurrency(p.discountPrice)}</span>
+                                <span className="text-[10px] text-slate-400 line-through">{formatCurrency(p.price)}</span>
                               </div>
                             ) : (
-                              <span>${p.price.toFixed(2)}</span>
+                              <span>{formatCurrency(p.price)}</span>
                             )}
                           </td>
                           <td className="p-4 text-center">
@@ -651,7 +652,7 @@ const AdminDashboard = () => {
                           <td className="p-4 font-mono font-bold text-slate-700 dark:text-slate-300">{o.invoiceNumber}</td>
                           <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">{o.user?.name || 'Customer'}</td>
                           <td className="p-4 text-slate-450">{new Date(o.createdAt).toLocaleDateString()}</td>
-                          <td className="p-4 font-bold">${o.totalPrice.toFixed(2)}</td>
+                          <td className="p-4 font-bold">{formatCurrency(o.totalPrice)}</td>
                           <td className="p-4">
                             <span className={`font-bold px-2 py-0.5 rounded-full ${o.isPaid ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
                               {o.isPaid ? 'Paid' : 'Pending'}
