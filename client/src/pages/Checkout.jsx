@@ -76,7 +76,7 @@ const Checkout = () => {
           id: clientSecret ? 'ch_' + clientSecret.slice(-12) : 'ch_mock_' + Date.now(),
           status: 'succeeded',
           update_time: new Date().toISOString(),
-          email_address: 'customer_payment@smartcart.com',
+          email_address: 'customer_payment@rainbowfashions.com',
         };
       }
 

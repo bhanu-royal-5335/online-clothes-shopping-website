@@ -1,6 +1,6 @@
-# SmartCart E-Commerce Platform
+# Rainbow Fashions E-Commerce Platform
 
-SmartCart is a full-featured, production-ready, premium online shopping platform built with a React SPA frontend and a Node/Express REST API backend. It features responsive light/dark design sheets, Stripe sandbox checkouts, and a comprehensive Admin dashboard.
+Rainbow Fashions is a full-featured, production-ready, premium online shopping platform built with a React SPA frontend and a Node/Express REST API backend. It features responsive light/dark design sheets, Stripe sandbox checkouts, and a comprehensive Admin dashboard.
 
 ---
 
@@ -62,7 +62,7 @@ shop/
 1. Open the file `server/.env` inside the project.
 2. The default variables are set to:
    - `PORT=5000`
-   - `MONGODB_URI=mongodb://127.0.0.1:27017/smartcart`
+   - `MONGODB_URI=mongodb://127.0.0.1:27017/rainbow_fashions`
    - If using a cloud database, swap `MONGODB_URI` for your Atlas connection string.
    - If using live Stripe, replace the `STRIPE_SECRET_KEY` with your test key.
 
@@ -88,8 +88,8 @@ cd ../server
 npm run seed
 ```
 *Successfully seeds the admin login credentials:*
-- **Admin account**: `admin@smartcart.com` (password: `admin123password`)
-- **Customer account**: `customer@smartcart.com` (password: `customer123password`)
+- **Admin account**: `admin@rainbowfashions.com` (password: `admin123password`)
+- **Customer account**: `customer@rainbowfashions.com` (password: `customer123password`)
 
 ### Step 4: Launch Dev Servers
 Open two terminal windows to run both packages in concurrent mode:

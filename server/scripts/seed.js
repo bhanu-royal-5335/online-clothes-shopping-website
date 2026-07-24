@@ -30,7 +30,7 @@ const seedData = async () => {
     // 1. Seed Users
     const adminUser = await User.create({
       name: 'Admin User',
-      email: 'admin@smartcart.com',
+      email: 'admin@rainbowfashions.com',
       password: 'admin123password',
       role: 'admin',
       isVerified: true,
@@ -38,7 +38,7 @@ const seedData = async () => {
 
     const customerUser = await User.create({
       name: 'Jane Doe',
-      email: 'customer@smartcart.com',
+      email: 'customer@rainbowfashions.com',
       password: 'customer123password',
       role: 'customer',
       isVerified: true,

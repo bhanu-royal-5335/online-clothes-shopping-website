@@ -72,7 +72,7 @@ const Login = () => {
               <input
                 type="email"
                 required
-                placeholder="customer@smartcart.com"
+                placeholder="customer@rainbowfashions.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-slate-950 border-none rounded-2xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
@@ -127,8 +127,8 @@ const Login = () => {
         {/* Demo Credentials Alert */}
         <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 p-4 rounded-2xl text-xs text-slate-500 space-y-1.5">
           <p className="font-extrabold uppercase text-slate-450 tracking-wider">Developer Demo Logins:</p>
-          <p>• Customer: <span className="font-semibold text-slate-700 dark:text-slate-300">customer@smartcart.com</span> (pw: <span className="font-mono">customer123password</span>)</p>
-          <p>• Admin: <span className="font-semibold text-slate-700 dark:text-slate-300">admin@smartcart.com</span> (pw: <span className="font-mono">admin123password</span>)</p>
+          <p>• Customer: <span className="font-semibold text-slate-700 dark:text-slate-300">customer@rainbowfashions.com</span> (pw: <span className="font-mono">customer123password</span>)</p>
+          <p>• Admin: <span className="font-semibold text-slate-700 dark:text-slate-300">admin@rainbowfashions.com</span> (pw: <span className="font-mono">admin123password</span>)</p>
         </div>
 
         {/* Footnote */}
