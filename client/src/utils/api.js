@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const rawApiUrl = import.meta.env.VITE_API_URL || '';
+const cleanBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: cleanBaseUrl,
   withCredentials: true,
 });
 
@@ -21,7 +24,7 @@ api.interceptors.response.use(
 
       try {
         await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/refresh`,
+          `${cleanBaseUrl}/api/auth/refresh`,
           {},
           { withCredentials: true }
         );
