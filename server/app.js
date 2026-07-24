@@ -30,9 +30,33 @@ app.use(
 );
 
 // Cross Origin Resource Sharing config
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://online-clothes-shopping-website.onrender.com',
+  'https://rainbow-fashions.onrender.com',
+  'https://rainbow-fashions-shop.onrender.com',
+  'https://rainbow-fashions-api.onrender.com',
+];
+
+if (process.env.CLIENT_URL) {
+  process.env.CLIENT_URL.split(',').forEach((url) => {
+    const trimmed = url.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
+        return callback(null, origin);
+      }
+      return callback(null, origin);
+    },
     credentials: true, // Allow cookies to be sent back & forth
   })
 );

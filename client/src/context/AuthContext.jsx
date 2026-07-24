@@ -19,8 +19,7 @@ export const AuthProvider = ({ children }) => {
           setUser(data);
           localStorage.setItem('userInfo', JSON.stringify(data));
         } catch (error) {
-          console.error('Error restoring session profile:', error.message);
-          // If session fails (unauthorized), clear cache
+          // If session is expired or unauthenticated, silently clear stale user cache
           setUser(null);
           localStorage.removeItem('userInfo');
         }
