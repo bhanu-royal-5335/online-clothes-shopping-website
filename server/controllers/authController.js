@@ -283,11 +283,15 @@ const forgotPasswordEmailOTP = async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    await emailService.sendEmailOTP(formattedEmail, rawOTP, 'Password Reset');
+    const emailResult = await emailService.sendEmailOTP(formattedEmail, rawOTP, 'Password Reset');
+    const showDebug = !process.env.EMAIL_USER || !emailResult?.success;
+
     res.status(200).json({
       success: true,
-      message: `Password reset OTP sent to email: ${formattedEmail}`,
-      ...(!process.env.EMAIL_USER && { debugOTP: rawOTP }),
+      message: emailResult?.success
+        ? `Password reset OTP sent to email: ${formattedEmail}`
+        : `Reset OTP generated for ${formattedEmail}`,
+      ...(showDebug && { debugOTP: rawOTP }),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
