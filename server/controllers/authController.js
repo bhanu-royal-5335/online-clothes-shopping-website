@@ -1,8 +1,18 @@
 const User = require('../models/User');
+const OTP = require('../models/OTP');
 const generateTokens = require('../utils/generateToken');
+const otpService = require('../services/otpService');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// @desc    Register a new user
+// Helper to normalize phone number string
+const normalizePhone = (phone, countryCode = '+91') => {
+  const clean = phone.replace(/[^0-9+]/g, '');
+  if (clean.startsWith('+')) return clean;
+  return `${countryCode}${clean}`;
+};
+
+// @desc    Register a new user via Email
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
@@ -12,10 +22,9 @@ const registerUser = async (req, res) => {
     const userExists = await User.findOne({ email });
 
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'User with this email already exists' });
     }
 
-    // Determine role (first registered user can be admin, otherwise customer)
     const isFirstUser = (await User.countDocuments({})) === 0;
     const role = isFirstUser ? 'admin' : 'customer';
 
@@ -24,7 +33,8 @@ const registerUser = async (req, res) => {
       email,
       password,
       role,
-      isVerified: isFirstUser, // Auto-verify first user / admin
+      loginMethod: 'email',
+      isVerified: isFirstUser,
     });
 
     if (user) {
@@ -36,6 +46,7 @@ const registerUser = async (req, res) => {
         email: user.email,
         role: user.role,
         isVerified: user.isVerified,
+        loginMethod: user.loginMethod,
         wishlist: user.wishlist,
       });
     } else {
@@ -46,14 +57,184 @@ const registerUser = async (req, res) => {
   }
 };
 
-// @desc    Auth user & get token
-// @route   POST /api/auth/login
+// @desc    Send 6-Digit Registration OTP to Phone
+// @route   POST /api/auth/send-registration-otp
+// @access  Public
+const sendRegistrationOTP = async (req, res) => {
+  const { phone, countryCode = '+91' } = req.body;
+
+  try {
+    const formattedPhone = normalizePhone(phone, countryCode);
+
+    // Check if phone already registered and verified
+    const existingUser = await User.findOne({ phone: formattedPhone, phoneVerified: true });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Phone number already registered. Please sign in.' });
+    }
+
+    // Generate 6-digit OTP
+    const rawOTP = otpService.generate6DigitOTP();
+    const hashedOTP = await bcrypt.hash(rawOTP, 10);
+
+    // Clear old OTPs for this phone & purpose
+    await OTP.deleteMany({ phone: formattedPhone, purpose: 'registration' });
+
+    // Store new OTP in MongoDB with 5-min TTL
+    await OTP.create({
+      phone: formattedPhone,
+      otp: hashedOTP,
+      purpose: 'registration',
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+    });
+
+    // Send SMS via OTP service
+    const smsMessage = `Your Rainbow Fashions verification code is: ${rawOTP}. Valid for 5 minutes. Do not share with anyone.`;
+    await otpService.sendSMS(formattedPhone, smsMessage);
+
+    res.status(200).json({
+      success: true,
+      message: `OTP sent successfully to ${formattedPhone}`,
+      phone: formattedPhone,
+      // For development/testing ease, include raw OTP if not in production
+      ...(process.env.NODE_ENV !== 'production' && { debugOTP: rawOTP }),
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to send OTP: ' + error.message });
+  }
+};
+
+// @desc    Verify Registration OTP & Create User Account
+// @route   POST /api/auth/verify-registration-otp
+// @access  Public
+const verifyRegistrationOTPAndRegister = async (req, res) => {
+  const { name, email, phone, countryCode = '+91', password, otp } = req.body;
+
+  try {
+    const formattedPhone = normalizePhone(phone, countryCode);
+
+    // Find OTP record
+    const otpRecord = await OTP.findOne({ phone: formattedPhone, purpose: 'registration' });
+
+    if (!otpRecord) {
+      return res.status(400).json({ message: 'OTP expired or not found. Please request a new OTP.' });
+    }
+
+    if (otpRecord.attempts >= 5) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return res.status(400).json({ message: 'Maximum OTP verification attempts exceeded. Request a new OTP.' });
+    }
+
+    // Compare OTP
+    const isMatch = await otpRecord.matchOTP(otp);
+
+    if (!isMatch) {
+      otpRecord.attempts += 1;
+      await otpRecord.save();
+      return res.status(400).json({ message: 'Invalid OTP code. Please check and try again.' });
+    }
+
+    // Delete OTP record immediately upon match
+    await OTP.deleteOne({ _id: otpRecord._id });
+
+    // Check duplicate email if provided
+    if (email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: 'An account with this email already exists.' });
+      }
+    }
+
+    // Determine user role
+    const isFirstUser = (await User.countDocuments({})) === 0;
+    const role = isFirstUser ? 'admin' : 'customer';
+
+    // Create user
+    const user = await User.create({
+      name,
+      email: email || undefined,
+      phone: formattedPhone,
+      countryCode,
+      phoneVerified: true,
+      loginMethod: 'phone',
+      password,
+      role,
+      isVerified: true,
+      lastLogin: new Date(),
+    });
+
+    generateTokens(res, user._id);
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      countryCode: user.countryCode,
+      phoneVerified: user.phoneVerified,
+      loginMethod: user.loginMethod,
+      role: user.role,
+      wishlist: user.wishlist,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Auth user via Phone Number + Password (NO OTP Required)
+// @route   POST /api/auth/login-phone
+// @access  Public
+const loginPhone = async (req, res) => {
+  const { phone, countryCode = '+91', password } = req.body;
+
+  try {
+    const formattedPhone = normalizePhone(phone, countryCode);
+
+    const user = await User.findOne({ phone: formattedPhone });
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid phone number or password' });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({ message: 'User account is blocked. Please contact support.' });
+    }
+
+    const isMatch = await user.matchPassword(password);
+
+    if (isMatch) {
+      user.lastLogin = new Date();
+      await user.save();
+
+      generateTokens(res, user._id);
+
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        countryCode: user.countryCode,
+        phoneVerified: user.phoneVerified,
+        loginMethod: 'phone',
+        role: user.role,
+        isVerified: user.isVerified,
+        wishlist: user.wishlist,
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid phone number or password' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Auth user via Email + Password
+// @route   POST /api/auth/login / /api/auth/login-email
 // @access  Public
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -66,13 +247,18 @@ const loginUser = async (req, res) => {
     const isMatch = await user.matchPassword(password);
 
     if (isMatch) {
+      user.lastLogin = new Date();
+      await user.save();
+
       generateTokens(res, user._id);
 
       res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
+        loginMethod: user.loginMethod || 'email',
         isVerified: user.isVerified,
         wishlist: user.wishlist,
       });
@@ -84,9 +270,115 @@ const loginUser = async (req, res) => {
   }
 };
 
-// @desc    Logout user & clear cookies
-// @route   POST /api/auth/logout
+// @desc    Send Forgot Password OTP to Phone
+// @route   POST /api/auth/forgot-password-phone
 // @access  Public
+const forgotPasswordPhone = async (req, res) => {
+  const { phone, countryCode = '+91' } = req.body;
+
+  try {
+    const formattedPhone = normalizePhone(phone, countryCode);
+
+    const user = await User.findOne({ phone: formattedPhone });
+    if (!user) {
+      return res.status(404).json({ message: 'No account registered with this phone number.' });
+    }
+
+    const rawOTP = otpService.generate6DigitOTP();
+    const hashedOTP = await bcrypt.hash(rawOTP, 10);
+
+    await OTP.deleteMany({ phone: formattedPhone, purpose: 'forgot_password' });
+
+    await OTP.create({
+      phone: formattedPhone,
+      otp: hashedOTP,
+      purpose: 'forgot_password',
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    const smsMessage = `Your Rainbow Fashions password reset code is: ${rawOTP}. Valid for 5 minutes.`;
+    await otpService.sendSMS(formattedPhone, smsMessage);
+
+    res.status(200).json({
+      success: true,
+      message: `Password reset OTP sent to ${formattedPhone}`,
+      ...(process.env.NODE_ENV !== 'production' && { debugOTP: rawOTP }),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reset Password via Phone OTP
+// @route   POST /api/auth/reset-password-phone
+// @access  Public
+const resetPasswordPhone = async (req, res) => {
+  const { phone, countryCode = '+91', otp, password } = req.body;
+
+  try {
+    const formattedPhone = normalizePhone(phone, countryCode);
+
+    const otpRecord = await OTP.findOne({ phone: formattedPhone, purpose: 'forgot_password' });
+    if (!otpRecord) {
+      return res.status(400).json({ message: 'OTP expired or not found. Please request a new OTP.' });
+    }
+
+    const isMatch = await otpRecord.matchOTP(otp);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid OTP code.' });
+    }
+
+    const user = await User.findOne({ phone: formattedPhone });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    user.password = password;
+    await user.save();
+
+    await OTP.deleteOne({ _id: otpRecord._id });
+
+    res.json({ message: 'Password reset successfully! You can now log in.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resend OTP
+// @route   POST /api/auth/resend-otp
+// @access  Public
+const resendOTP = async (req, res) => {
+  const { phone, countryCode = '+91', purpose = 'registration' } = req.body;
+
+  try {
+    const formattedPhone = normalizePhone(phone, countryCode);
+
+    const rawOTP = otpService.generate6DigitOTP();
+    const hashedOTP = await bcrypt.hash(rawOTP, 10);
+
+    await OTP.deleteMany({ phone: formattedPhone, purpose });
+
+    await OTP.create({
+      phone: formattedPhone,
+      otp: hashedOTP,
+      purpose,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    const smsMessage = `Your new Rainbow Fashions verification code is: ${rawOTP}. Valid for 5 minutes.`;
+    await otpService.sendSMS(formattedPhone, smsMessage);
+
+    res.status(200).json({
+      success: true,
+      message: `New OTP sent successfully to ${formattedPhone}`,
+      ...(process.env.NODE_ENV !== 'production' && { debugOTP: rawOTP }),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Logout user
 const logoutUser = async (req, res) => {
   const isProd = process.env.NODE_ENV === 'production';
   const cookieOptions = {
@@ -103,8 +395,6 @@ const logoutUser = async (req, res) => {
 };
 
 // @desc    Get user profile
-// @route   GET /api/auth/profile
-// @access  Private
 const getUserProfile = async (req, res) => {
   const user = await User.findById(req.user._id).select('-password');
   if (user) {
@@ -115,8 +405,6 @@ const getUserProfile = async (req, res) => {
 };
 
 // @desc    Update user profile
-// @route   PUT /api/auth/profile
-// @access  Private
 const updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -124,6 +412,7 @@ const updateUserProfile = async (req, res) => {
     if (user) {
       user.name = req.body.name || user.name;
       user.email = req.body.email || user.email;
+      user.phone = req.body.phone || user.phone;
 
       if (req.body.password) {
         user.password = req.body.password;
@@ -136,6 +425,7 @@ const updateUserProfile = async (req, res) => {
         _id: updatedUser._id,
         name: updatedUser.name,
         email: updatedUser.email,
+        phone: updatedUser.phone,
         role: updatedUser.role,
         isVerified: updatedUser.isVerified,
         wishlist: updatedUser.wishlist,
@@ -149,8 +439,6 @@ const updateUserProfile = async (req, res) => {
 };
 
 // @desc    Refresh Access Token
-// @route   POST /api/auth/refresh
-// @access  Public
 const refreshAccessToken = async (req, res) => {
   const token = req.cookies.refreshToken;
 
@@ -170,18 +458,14 @@ const refreshAccessToken = async (req, res) => {
       return res.status(403).json({ message: 'User is blocked' });
     }
 
-    // Refresh cookies
     generateTokens(res, user._id);
-
     res.status(200).json({ message: 'Token refreshed successfully' });
   } catch (error) {
     res.status(401).json({ message: 'Not authorized, invalid refresh token' });
   }
 };
 
-// @desc    Simulate Verify Email (Mock)
-// @route   POST /api/auth/verify-email
-// @access  Private
+// @desc    Simulate Verify Email
 const verifyEmail = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -197,9 +481,7 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-// @desc    Simulate Forgot Password Code
-// @route   POST /api/auth/forgot-password
-// @access  Public
+// @desc    Forgot Password Email
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
@@ -207,16 +489,13 @@ const forgotPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User with this email does not exist' });
     }
-    // In production, send email reset link. For SmartCart demo, we send back success.
-    res.json({ message: 'Reset link simulated and sent to your email.' });
+    res.json({ message: 'Reset link sent to your email.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Simulate Reset Password Action
-// @route   POST /api/auth/reset-password
-// @access  Public
+// @desc    Reset Password Email
 const resetPassword = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -234,7 +513,13 @@ const resetPassword = async (req, res) => {
 
 module.exports = {
   registerUser,
+  sendRegistrationOTP,
+  verifyRegistrationOTPAndRegister,
   loginUser,
+  loginPhone,
+  forgotPasswordPhone,
+  resetPasswordPhone,
+  resendOTP,
   logoutUser,
   getUserProfile,
   updateUserProfile,

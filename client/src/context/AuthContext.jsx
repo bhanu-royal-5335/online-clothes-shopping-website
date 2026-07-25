@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }) => {
           setUser(data);
           localStorage.setItem('userInfo', JSON.stringify(data));
         } catch (error) {
-          // If session is expired or unauthenticated, silently clear stale user cache
           setUser(null);
           localStorage.removeItem('userInfo');
         }
@@ -29,6 +28,7 @@ export const AuthProvider = ({ children }) => {
     fetchProfile();
   }, []);
 
+  // Email Login
   const login = async (email, password) => {
     const { data } = await api.post('/api/auth/login', { email, password });
     setUser(data);
@@ -36,10 +36,45 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  // Phone Login (Phone Number + Password - NO OTP)
+  const loginPhone = async (phone, countryCode, password) => {
+    const { data } = await api.post('/api/auth/login-phone', { phone, countryCode, password });
+    setUser(data);
+    localStorage.setItem('userInfo', JSON.stringify(data));
+    return data;
+  };
+
+  // Email Register
   const register = async (name, email, password) => {
     const { data } = await api.post('/api/auth/register', { name, email, password });
     setUser(data);
     localStorage.setItem('userInfo', JSON.stringify(data));
+    return data;
+  };
+
+  // Send Phone Registration OTP
+  const sendRegistrationOTP = async (phone, countryCode) => {
+    const { data } = await api.post('/api/auth/send-registration-otp', { phone, countryCode });
+    return data;
+  };
+
+  // Verify Phone Registration OTP & Auto-Login
+  const verifyRegistrationOTPAndRegister = async (registrationData) => {
+    const { data } = await api.post('/api/auth/verify-registration-otp', registrationData);
+    setUser(data);
+    localStorage.setItem('userInfo', JSON.stringify(data));
+    return data;
+  };
+
+  // Send Forgot Password OTP to Phone
+  const forgotPasswordPhone = async (phone, countryCode) => {
+    const { data } = await api.post('/api/auth/forgot-password-phone', { phone, countryCode });
+    return data;
+  };
+
+  // Reset Password via Phone OTP
+  const resetPasswordPhone = async (resetData) => {
+    const { data } = await api.post('/api/auth/reset-password-phone', resetData);
     return data;
   };
 
@@ -72,7 +107,6 @@ export const AuthProvider = ({ children }) => {
   const toggleWishlist = async (productId) => {
     if (!user) return;
     try {
-      // Toggle locally first for high reactivity
       const isInWishlist = user.wishlist?.includes(productId);
       let updatedWishlist = [...(user.wishlist || [])];
       
@@ -82,14 +116,10 @@ export const AuthProvider = ({ children }) => {
         updatedWishlist.push(productId);
       }
 
-      // Optimistically update
       const updatedUser = { ...user, wishlist: updatedWishlist };
       setUser(updatedUser);
       localStorage.setItem('userInfo', JSON.stringify(updatedUser));
 
-      // Sync with server
-      // Note: We can save user profile with wishlist directly or we have a dedicated route.
-      // Saving through the PUT profile route is a simple, robust fallback since it handles profile properties.
       await api.put('/api/auth/profile', { wishlist: updatedWishlist });
     } catch (error) {
       console.error('Failed to sync wishlist status:', error.message);
@@ -102,7 +132,12 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         login,
+        loginPhone,
         register,
+        sendRegistrationOTP,
+        verifyRegistrationOTPAndRegister,
+        forgotPasswordPhone,
+        resetPasswordPhone,
         logout,
         updateProfile,
         verifyEmail,

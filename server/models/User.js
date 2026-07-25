@@ -10,11 +10,28 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, 'Please enter an email'],
-      unique: true,
+      sparse: true,
       lowercase: true,
       trim: true,
-      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email'],
+    },
+    phone: {
+      type: String,
+      sparse: true,
+      trim: true,
+      index: true,
+    },
+    countryCode: {
+      type: String,
+      default: '+91',
+    },
+    phoneVerified: {
+      type: Boolean,
+      default: false,
+    },
+    loginMethod: {
+      type: String,
+      enum: ['email', 'phone'],
+      default: 'email',
     },
     password: {
       type: String,
@@ -34,6 +51,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    lastLogin: {
+      type: Date,
+      default: Date.now,
+    },
     wishlist: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -52,10 +73,11 @@ const userSchema = new mongoose.Schema(
 // Encrypt password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
-    next();
+    return next();
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
 // Compare password

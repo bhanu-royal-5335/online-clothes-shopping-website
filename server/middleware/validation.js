@@ -12,7 +12,7 @@ const validateResults = (req, res, next) => {
 
 const registerValidator = [
   body('name').trim().notEmpty().withMessage('Name is required'),
-  body('email').trim().isEmail().withMessage('A valid email is required'),
+  body('email').optional({ checkFalsy: true }).trim().isEmail().withMessage('A valid email is required'),
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
@@ -22,6 +22,31 @@ const registerValidator = [
 const loginValidator = [
   body('email').trim().isEmail().withMessage('A valid email is required'),
   body('password').notEmpty().withMessage('Password is required'),
+  validateResults,
+];
+
+// Phone Auth Validators
+const sendOTPValidator = [
+  body('phone').trim().notEmpty().withMessage('Phone number is required'),
+  validateResults,
+];
+
+const verifyOTPValidator = [
+  body('phone').trim().notEmpty().withMessage('Phone number is required'),
+  body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('6-digit OTP code is required'),
+  validateResults,
+];
+
+const phoneLoginValidator = [
+  body('phone').trim().notEmpty().withMessage('Phone number is required'),
+  body('password').notEmpty().withMessage('Password is required'),
+  validateResults,
+];
+
+const phoneResetPasswordValidator = [
+  body('phone').trim().notEmpty().withMessage('Phone number is required'),
+  body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('6-digit OTP code is required'),
+  body('password').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
   validateResults,
 ];
 
@@ -62,6 +87,10 @@ const orderValidator = [
 module.exports = {
   registerValidator,
   loginValidator,
+  sendOTPValidator,
+  verifyOTPValidator,
+  phoneLoginValidator,
+  phoneResetPasswordValidator,
   productValidator,
   reviewValidator,
   orderValidator,
