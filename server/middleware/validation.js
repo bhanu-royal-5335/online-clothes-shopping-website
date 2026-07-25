@@ -20,7 +20,6 @@ const registerValidator = [
 ];
 
 const loginValidator = [
-  body('email').trim().isEmail().withMessage('A valid email is required'),
   body('password').notEmpty().withMessage('Password is required'),
   validateResults,
 ];
@@ -38,14 +37,11 @@ const verifyOTPValidator = [
 ];
 
 const phoneLoginValidator = [
-  body('phone').trim().notEmpty().withMessage('Phone number is required'),
   body('password').notEmpty().withMessage('Password is required'),
   validateResults,
 ];
 
 const phoneResetPasswordValidator = [
-  body('phone').trim().notEmpty().withMessage('Phone number is required'),
-  body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('6-digit OTP code is required'),
   body('password').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
   validateResults,
 ];

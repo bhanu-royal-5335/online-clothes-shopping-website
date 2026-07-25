@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, Shirt, Eye, EyeOff, Sparkles, Phone, ShieldCheck, X, CheckCircle, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Mail, Lock, User, Shirt, Eye, EyeOff, Sparkles, Phone, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const COUNTRY_CODES = [
@@ -15,7 +15,7 @@ const COUNTRY_CODES = [
 
 const Register = () => {
   const navigate = useNavigate();
-  const { user, sendRegistrationOTP, verifyRegistrationOTPAndRegister, register } = useAuth();
+  const { user, register } = useAuth();
 
   // Form Fields
   const [name, setName] = useState('');
@@ -27,29 +27,13 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // OTP Verification Modal State
-  const [showOTPModal, setShowOTPModal] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [demoOTP, setDemoOTP] = useState('');
-  const [verifyingOTP, setVerifyingOTP] = useState(false);
-  const [resendTimer, setResendTimer] = useState(60);
-
   useEffect(() => {
     if (user) {
       navigate('/', { replace: true });
     }
   }, [user, navigate]);
 
-  // Resend Countdown Timer
-  useEffect(() => {
-    let timer;
-    if (showOTPModal && resendTimer > 0) {
-      timer = setInterval(() => setResendTimer((prev) => prev - 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [showOTPModal, resendTimer]);
-
-  // Handle Form Submission (Step 1: Validate & Send OTP)
+  // Direct Account Creation (No OTP step)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -70,69 +54,13 @@ const Register = () => {
 
     setLoading(true);
     try {
-      // Step 1: Send OTP to phone
-      const data = await sendRegistrationOTP(phone, countryCode);
-      if (data.debugOTP) {
-        setDemoOTP(data.debugOTP);
-        setOtpCode(data.debugOTP);
-        toast.success(`Demo Mode OTP Code: ${data.debugOTP}`, { duration: 6000 });
-      } else {
-        toast.success(data.message || `OTP sent to ${countryCode}${phone}`);
-      }
-      setShowOTPModal(true);
-      setResendTimer(60);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send OTP. Please check phone number.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Step 2: Verify OTP & Complete Account Creation
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
-
-    if (!otpCode || otpCode.length !== 6) {
-      toast.error('Please enter the 6-digit OTP code');
-      return;
-    }
-
-    setVerifyingOTP(true);
-    try {
-      await verifyRegistrationOTPAndRegister({
-        name,
-        email: email || undefined,
-        phone,
-        countryCode,
-        password,
-        otp: otpCode,
-      });
-
-      toast.success('Account created & phone verified successfully!');
-      setShowOTPModal(false);
+      await register(name, email, phone, countryCode, password);
+      toast.success('Account created successfully! Welcome to Rainbow Fashions.');
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Invalid or expired OTP. Try again.');
+      toast.error(error.response?.data?.message || 'Registration failed. Please check your details.');
     } finally {
-      setVerifyingOTP(false);
-    }
-  };
-
-  // Resend OTP Handler
-  const handleResendOTP = async () => {
-    if (resendTimer > 0) return;
-    try {
-      const data = await sendRegistrationOTP(phone, countryCode);
-      if (data.debugOTP) {
-        setDemoOTP(data.debugOTP);
-        setOtpCode(data.debugOTP);
-        toast.success(`Demo Mode OTP: ${data.debugOTP}`, { duration: 6000 });
-      } else {
-        toast.success('New OTP sent to your phone');
-      }
-      setResendTimer(60);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to resend OTP');
+      setLoading(false);
     }
   };
 
@@ -153,7 +81,7 @@ const Register = () => {
             <span>Create Account</span>
             <Sparkles className="h-5 w-5 text-amber-500 fill-amber-500/20" />
           </h2>
-          <p className="text-xs text-slate-400">Join Rainbow Fashions with Phone & OTP Verification</p>
+          <p className="text-xs text-slate-400">Join Rainbow Fashions - Fast & Direct Registration</p>
         </div>
 
         {/* Form fields */}
@@ -174,7 +102,7 @@ const Register = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-slate-450 font-bold uppercase">Phone Number (OTP Verification) *</label>
+            <label className="text-xs text-slate-450 font-bold uppercase">Phone Number *</label>
             <div className="flex gap-2">
               <select
                 value={countryCode}
@@ -255,9 +183,10 @@ const Register = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold py-3 rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-102 transition-all duration-200 mt-2"
+            className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold py-3 rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-102 transition-all duration-200 mt-2 flex items-center justify-center space-x-2"
           >
-            {loading ? 'Sending OTP Code...' : 'Create Account & Verify Phone'}
+            <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+            <ArrowRight className="h-4 w-4" />
           </button>
         </form>
 
@@ -269,90 +198,6 @@ const Register = () => {
           </Link>
         </div>
       </motion.div>
-
-      {/* STEP 2: 6-DIGIT OTP VERIFICATION MODAL */}
-      <AnimatePresence>
-        {showOTPModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowOTPModal(false)}
-              className="fixed inset-0 bg-slate-950/75 backdrop-blur-md"
-            />
-
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-2xl z-10 space-y-5"
-            >
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl">
-                    <ShieldCheck className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white font-display">Verify Phone Number</h3>
-                    <p className="text-[10px] text-slate-400">OTP sent to {countryCode} {phone}</p>
-                  </div>
-                </div>
-                <button onClick={() => setShowOTPModal(false)} className="p-1 text-slate-400 hover:text-white">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {demoOTP && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 text-center space-y-0.5">
-                  <span className="text-[10px] uppercase font-bold text-amber-400">Demo / Testing Gateway Code</span>
-                  <div className="text-xl font-extrabold tracking-widest text-amber-300">{demoOTP}</div>
-                  <p className="text-[9px] text-slate-400">Pre-filled for easy testing. Configure Twilio in Render env for real mobile carrier SMS.</p>
-                </div>
-              )}
-
-              <form onSubmit={handleVerifyOTP} className="space-y-4 text-center">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase block">Enter 6-Digit OTP Code</label>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    required
-                    placeholder="_ _ _ _ _ _"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-amber-500/40 rounded-2xl py-3 text-center text-2xl tracking-[0.5em] font-extrabold text-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={verifyingOTP}
-                  className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs py-3.5 rounded-2xl shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center space-x-2"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  <span>{verifyingOTP ? 'Verifying Code...' : 'Verify OTP & Complete Registration'}</span>
-                </button>
-
-                <div className="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-100 dark:border-slate-850">
-                  <span>Didn&apos;t get the code?</span>
-                  <button
-                    type="button"
-                    onClick={handleResendOTP}
-                    disabled={resendTimer > 0}
-                    className={`font-bold flex items-center space-x-1 ${
-                      resendTimer > 0 ? 'text-slate-600 cursor-not-allowed' : 'text-amber-500 hover:underline'
-                    }`}
-                  >
-                    <RefreshCw className={`h-3.5 w-3.5 ${resendTimer > 0 ? '' : 'animate-spin'}`} />
-                    <span>{resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}</span>
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

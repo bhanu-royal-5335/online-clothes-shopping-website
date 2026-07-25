@@ -2,41 +2,22 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Shirt, Eye, EyeOff, Sparkles, X, CheckCircle, Phone, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Shirt, Eye, EyeOff, Sparkles, X, ArrowRight, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
-import axios from 'axios';
-
-const COUNTRY_CODES = [
-  { code: '+91', country: 'IN 🇮🇳' },
-  { code: '+1', country: 'US 🇺🇸' },
-  { code: '+44', country: 'UK 🇬🇧' },
-  { code: '+971', country: 'UAE 🇦🇪' },
-  { code: '+61', country: 'AU 🇦🇺' },
-];
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, login, loginPhone, forgotPasswordPhone, resetPasswordPhone, forgotPasswordEmailOTP, resetPasswordEmailOTP } = useAuth();
+  const { user, login, forgotPasswordPhone, resetPasswordPhone, forgotPasswordEmailOTP, resetPasswordEmailOTP } = useAuth();
 
-  // Login Mode Tab
-  const [loginMethod, setLoginMethod] = useState('phone'); // 'phone' | 'email'
-
-  // Email form state
-  const [email, setEmail] = useState('');
-  const [emailPassword, setEmailPassword] = useState('');
-
-  // Phone form state
-  const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState('+91');
-  const [phonePassword, setPhonePassword] = useState('');
-
+  // Unified Login State
+  const [identifier, setIdentifier] = useState(''); // Email or Phone Number
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Forgot / Reset Password Modal state
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
-  const [resetMethod, setResetMethod] = useState('phone'); // 'phone' | 'email'
   const [resetTarget, setResetTarget] = useState('');
   const [resetOTP, setResetOTP] = useState('');
   const [demoResetOTP, setDemoResetOTP] = useState('');
@@ -53,78 +34,58 @@ const Login = () => {
     }
   }, [user, navigate, redirectPath]);
 
-  // Email Submit Handler
-  const handleEmailSubmit = async (e) => {
+  // Unified Submit Handler (Email OR Phone Number + Password)
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !emailPassword) {
-      toast.error('Please enter email and password');
+    if (!identifier || !password) {
+      toast.error('Please enter your email or phone number and password');
       return;
     }
 
     setLoading(true);
     try {
-      await login(email, emailPassword);
+      await login(identifier, password);
       toast.success('Logged in successfully!');
       navigate(redirectPath, { replace: true });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed. Invalid email or password.');
+      toast.error(error.response?.data?.message || 'Login failed. Invalid credentials.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Phone Submit Handler (NO OTP Required - Password Auth Only)
-  const handlePhoneSubmit = async (e) => {
-    e.preventDefault();
-    if (!phone || !phonePassword) {
-      toast.error('Please enter phone number and password');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await loginPhone(phone, countryCode, phonePassword);
-      toast.success('Logged in successfully with Phone Number!');
-      navigate(redirectPath, { replace: true });
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed. Invalid phone or password.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Forgot Password Handler
-  const handleSendResetOTP = async () => {
+  // Forgot Password Reset Handler (Always resets loading state reliably)
+  const handleSendResetCode = async () => {
     if (!resetTarget) {
-      toast.error('Please enter your phone number or email');
+      toast.error('Please enter your email address or phone number');
       return;
     }
 
     setResetLoading(true);
     try {
-      if (resetMethod === 'phone') {
-        const res = await forgotPasswordPhone(resetTarget, countryCode);
-        if (res.debugOTP) {
-          setDemoResetOTP(res.debugOTP);
-          setResetOTP(res.debugOTP);
-          toast.success(`Demo Mode Reset OTP: ${res.debugOTP}`, { duration: 6000 });
-        } else {
-          toast.success(res.message || `Reset OTP sent to ${resetTarget}`);
-        }
-        setOtpSent(true);
-      } else {
+      const isEmail = resetTarget.includes('@');
+      if (isEmail) {
         const res = await forgotPasswordEmailOTP(resetTarget);
         if (res.debugOTP) {
           setDemoResetOTP(res.debugOTP);
           setResetOTP(res.debugOTP);
-          toast.success(`Demo Mode Reset OTP: ${res.debugOTP}`, { duration: 6000 });
+          toast.success(`Demo Mode Reset Code: ${res.debugOTP}`, { duration: 6000 });
         } else {
-          toast.success(res.message || `Password reset 6-digit OTP sent to your email`);
+          toast.success(res.message || `Reset code sent to ${resetTarget}`);
         }
-        setOtpSent(true);
+      } else {
+        const res = await forgotPasswordPhone(resetTarget);
+        if (res.debugOTP) {
+          setDemoResetOTP(res.debugOTP);
+          setResetOTP(res.debugOTP);
+          toast.success(`Demo Mode Reset Code: ${res.debugOTP}`, { duration: 6000 });
+        } else {
+          toast.success(res.message || `Reset code sent to ${resetTarget}`);
+        }
       }
+      setOtpSent(true);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to send reset code');
+      toast.error(error.response?.data?.message || 'Failed to send reset code. Verify your entry.');
     } finally {
       setResetLoading(false);
     }
@@ -144,16 +105,16 @@ const Login = () => {
 
     setResetLoading(true);
     try {
-      if (resetMethod === 'phone') {
-        await resetPasswordPhone({
-          phone: resetTarget,
-          countryCode,
+      const isEmail = resetTarget.includes('@');
+      if (isEmail) {
+        await resetPasswordEmailOTP({
+          email: resetTarget,
           otp: resetOTP,
           password: newPassword,
         });
       } else {
-        await resetPasswordEmailOTP({
-          email: resetTarget,
+        await resetPasswordPhone({
+          phone: resetTarget,
           otp: resetOTP,
           password: newPassword,
         });
@@ -184,188 +145,80 @@ const Login = () => {
       >
         {/* Brand logo header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 bg-primary-100 dark:bg-primary-950/40 rounded-2xl items-center justify-center text-primary-600 shadow-inner">
+          <div className="inline-flex h-12 w-12 bg-amber-500/10 rounded-2xl items-center justify-center text-amber-500 shadow-inner">
             <Shirt className="h-6 w-6" />
           </div>
           <h2 className="text-2xl font-extrabold font-display text-slate-900 dark:text-white flex items-center justify-center space-x-1">
             <span>Welcome back</span>
             <Sparkles className="h-5 w-5 text-amber-500 fill-amber-500/20" />
           </h2>
-          <p className="text-xs text-slate-400">Select your preferred login method to sign in</p>
+          <p className="text-xs text-slate-400">Sign in with your Email Address or Phone Number</p>
         </div>
 
-        {/* Login Method Tabs */}
-        <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl">
+        {/* UNIFIED LOGIN FORM (EMAIL OR PHONE) */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs text-slate-450 font-bold uppercase">Email Address or Phone Number</label>
+            <div className="relative">
+              <input
+                type="text"
+                required
+                placeholder="customer@example.com or 9876543210"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-slate-900 dark:text-white"
+              />
+              <Mail className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-slate-400" />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <label className="text-xs text-slate-450 font-bold uppercase">Password</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setResetTarget(identifier);
+                  setForgotModalOpen(true);
+                }}
+                className="text-[11px] font-bold uppercase text-amber-500 hover:underline"
+              >
+                Forgot Password?
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-slate-900 dark:text-white"
+              />
+              <Lock className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-slate-400" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-650"
+              >
+                {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+              </button>
+            </div>
+          </div>
+
           <button
-            type="button"
-            onClick={() => setLoginMethod('phone')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center space-x-2 ${
-              loginMethod === 'phone'
-                ? 'bg-white dark:bg-slate-800 text-amber-500 shadow-md border border-slate-200/50 dark:border-slate-700/50'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
-            }`}
+            type="submit"
+            disabled={loading}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold py-3.5 rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-102 transition-all duration-200 mt-2 flex items-center justify-center space-x-2"
           >
-            <Phone className="h-4 w-4" />
-            <span>Phone Login</span>
+            <span>{loading ? 'Signing In...' : 'Sign In'}</span>
+            <ArrowRight className="h-4 w-4" />
           </button>
-          <button
-            type="button"
-            onClick={() => setLoginMethod('email')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center space-x-2 ${
-              loginMethod === 'email'
-                ? 'bg-white dark:bg-slate-800 text-primary-600 shadow-md border border-slate-200/50 dark:border-slate-700/50'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
-            }`}
-          >
-            <Mail className="h-4 w-4" />
-            <span>Email Login</span>
-          </button>
-        </div>
+        </form>
 
-        {/* PHONE LOGIN FORM (NO OTP REQUIRED FOR LOGIN) */}
-        {loginMethod === 'phone' && (
-          <form onSubmit={handlePhoneSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs text-slate-450 font-bold uppercase">Phone Number</label>
-              <div className="flex gap-2">
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-3 py-2.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
-                  {COUNTRY_CODES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code} ({c.country})
-                    </option>
-                  ))}
-                </select>
-                <div className="relative flex-1">
-                  <input
-                    type="tel"
-                    required
-                    placeholder="9876543210"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-slate-900 dark:text-white"
-                  />
-                  <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <label className="text-xs text-slate-450 font-bold uppercase">Password</label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResetMethod('phone');
-                    setResetTarget(phone);
-                    setForgotModalOpen(true);
-                  }}
-                  className="text-[10px] font-bold uppercase text-amber-500 hover:underline"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder="••••••••"
-                  value={phonePassword}
-                  onChange={(e) => setPhonePassword(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-slate-900 dark:text-white"
-                />
-                <Lock className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-slate-400" />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-650"
-                >
-                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold py-3 rounded-2xl shadow-lg shadow-amber-500/20 hover:scale-102 transition-all duration-200 mt-2 flex items-center justify-center space-x-2"
-            >
-              <span>{loading ? 'Signing In...' : 'Sign In with Phone'}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
-        )}
-
-        {/* EMAIL LOGIN FORM */}
-        {loginMethod === 'email' && (
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs text-slate-450 font-bold uppercase">Email Address</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  required
-                  placeholder="customer@rainbowfashions.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-slate-900 dark:text-white"
-                />
-                <Mail className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-slate-400" />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <label className="text-xs text-slate-450 font-bold uppercase">Password</label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResetMethod('email');
-                    setResetTarget(email);
-                    setForgotModalOpen(true);
-                  }}
-                  className="text-[10px] font-bold uppercase text-primary-600 hover:underline"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder="••••••••"
-                  value={emailPassword}
-                  onChange={(e) => setEmailPassword(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all text-slate-900 dark:text-white"
-                />
-                <Lock className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-slate-400" />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-650"
-                >
-                  {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-2xl shadow-md shadow-primary-500/10 hover:scale-102 transition-all duration-200 mt-2 flex items-center justify-center space-x-2"
-            >
-              <span>{loading ? 'Signing In...' : 'Sign In with Email'}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
-        )}
-
-        {/* Demo Credentials Footer */}
+        {/* Developer Demo Credentials Footer */}
         <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 p-4 rounded-2xl text-xs text-slate-500 space-y-1.5">
-          <p className="font-extrabold uppercase text-slate-450 tracking-wider">Developer Demo Credentials:</p>
+          <p className="font-extrabold uppercase text-slate-450 tracking-wider">Demo Credentials:</p>
           <p>• Customer: <span className="font-semibold text-slate-700 dark:text-slate-300">customer@rainbowfashions.com</span> (pw: <span className="font-mono">customer123password</span>)</p>
           <p>• Admin: <span className="font-semibold text-slate-700 dark:text-slate-300">bhanuroyal177@gmail.com</span> (pw: <span className="font-mono">admin123password</span>)</p>
         </div>
@@ -399,7 +252,7 @@ const Login = () => {
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center space-x-2">
                   <ShieldCheck className="h-5 w-5 text-amber-500" />
-                  <span>Reset Password ({resetMethod === 'phone' ? 'Phone OTP' : 'Email'})</span>
+                  <span>Reset Password</span>
                 </h3>
                 <button
                   onClick={() => setForgotModalOpen(false)}
@@ -413,11 +266,11 @@ const Login = () => {
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-400 uppercase">
-                      {resetMethod === 'phone' ? 'Enter Phone Number' : 'Enter Email Address'}
+                      Enter Email Address or Phone Number
                     </label>
                     <input
-                      type={resetMethod === 'phone' ? 'tel' : 'email'}
-                      placeholder={resetMethod === 'phone' ? '9876543210' : 'user@example.com'}
+                      type="text"
+                      placeholder="user@example.com or 9876543210"
                       value={resetTarget}
                       onChange={(e) => setResetTarget(e.target.value)}
                       className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-amber-500"
@@ -425,11 +278,12 @@ const Login = () => {
                   </div>
 
                   <button
-                    onClick={handleSendResetOTP}
+                    type="button"
+                    onClick={handleSendResetCode}
                     disabled={resetLoading}
                     className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs py-3 rounded-xl transition-all shadow"
                   >
-                    {resetLoading ? 'Sending...' : resetMethod === 'phone' ? 'Send 6-Digit Reset OTP' : 'Send Email Reset Link'}
+                    {resetLoading ? 'Sending...' : 'Send Reset Code'}
                   </button>
                 </div>
               ) : (
@@ -440,8 +294,9 @@ const Login = () => {
                       <div className="text-lg font-extrabold tracking-widest text-amber-300">{demoResetOTP}</div>
                     </div>
                   )}
+
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-400 uppercase">Enter 6-Digit OTP</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase">Enter 6-Digit OTP Code</label>
                     <input
                       type="text"
                       maxLength={6}

@@ -28,15 +28,15 @@ export const AuthProvider = ({ children }) => {
     fetchProfile();
   }, []);
 
-  // Email Login
-  const login = async (email, password) => {
-    const { data } = await api.post('/api/auth/login', { email, password });
+  // Unified Login (Email OR Phone Number + Password)
+  const login = async (identifier, password) => {
+    const { data } = await api.post('/api/auth/login', { identifier, password });
     setUser(data);
     localStorage.setItem('userInfo', JSON.stringify(data));
     return data;
   };
 
-  // Phone Login (Phone Number + Password - NO OTP)
+  // Phone Login alias
   const loginPhone = async (phone, countryCode, password) => {
     const { data } = await api.post('/api/auth/login-phone', { phone, countryCode, password });
     setUser(data);
@@ -44,9 +44,9 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  // Email Register
-  const register = async (name, email, password) => {
-    const { data } = await api.post('/api/auth/register', { name, email, password });
+  // Direct Registration (Name, Email, Phone, CountryCode, Password - NO OTP)
+  const register = async (name, email, phone, countryCode, password) => {
+    const { data } = await api.post('/api/auth/register', { name, email, phone, countryCode, password });
     setUser(data);
     localStorage.setItem('userInfo', JSON.stringify(data));
     return data;
