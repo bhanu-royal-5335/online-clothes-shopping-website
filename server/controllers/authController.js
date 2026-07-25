@@ -177,9 +177,22 @@ const verifyRegistrationOTPAndRegister = async (req, res) => {
 // @desc    Send Forgot Password OTP to Phone
 const forgotPasswordPhone = async (req, res) => {
   const { phone, countryCode = '+91' } = req.body;
+  if (!phone) {
+    return res.status(400).json({ message: 'Phone number is required.' });
+  }
   try {
-    const formattedPhone = normalizePhone(phone, countryCode);
-    const user = await User.findOne({ phone: formattedPhone });
+    const rawId = phone.trim();
+    const formattedPhone = normalizePhone(rawId, countryCode);
+    const cleanDigits = rawId.replace(/[^0-9]/g, '');
+
+    const user = await User.findOne({
+      $or: [
+        { phone: formattedPhone },
+        { phone: rawId },
+        { phone: cleanDigits },
+      ],
+    });
+
     if (!user) {
       return res.status(404).json({ message: 'No account registered with this phone number.' });
     }
@@ -187,7 +200,15 @@ const forgotPasswordPhone = async (req, res) => {
     const rawOTP = otpService.generate6DigitOTP();
     const hashedOTP = await bcrypt.hash(rawOTP, 10);
 
-    await OTP.deleteMany({ phone: formattedPhone, purpose: 'forgot_password' });
+    await OTP.deleteMany({
+      $or: [
+        { phone: formattedPhone },
+        { phone: rawId },
+        { phone: cleanDigits },
+      ],
+      purpose: 'forgot_password',
+    });
+
     await OTP.create({
       phone: formattedPhone,
       otp: hashedOTP,
@@ -195,11 +216,13 @@ const forgotPasswordPhone = async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    await otpService.sendSMS(formattedPhone, `Password Reset OTP: ${rawOTP}`);
+    const smsResult = await otpService.sendSMS(formattedPhone, `Password Reset OTP: ${rawOTP}`);
+    const showDebug = !process.env.TWILIO_ACCOUNT_SID || !smsResult?.success;
+
     res.status(200).json({
       success: true,
-      message: `Reset OTP sent to ${formattedPhone}`,
-      ...(!process.env.TWILIO_ACCOUNT_SID && { debugOTP: rawOTP }),
+      message: `Reset OTP generated for ${formattedPhone}`,
+      ...(showDebug && { debugOTP: rawOTP }),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -209,9 +232,23 @@ const forgotPasswordPhone = async (req, res) => {
 // @desc    Reset Password via Phone OTP
 const resetPasswordPhone = async (req, res) => {
   const { phone, countryCode = '+91', otp, password } = req.body;
+  if (!phone || !otp || !password) {
+    return res.status(400).json({ message: 'Phone number, OTP, and new password are required.' });
+  }
   try {
-    const formattedPhone = normalizePhone(phone, countryCode);
-    const otpRecord = await OTP.findOne({ phone: formattedPhone, purpose: 'forgot_password' });
+    const rawId = phone.trim();
+    const formattedPhone = normalizePhone(rawId, countryCode);
+    const cleanDigits = rawId.replace(/[^0-9]/g, '');
+
+    const otpRecord = await OTP.findOne({
+      $or: [
+        { phone: formattedPhone },
+        { phone: rawId },
+        { phone: cleanDigits },
+      ],
+      purpose: 'forgot_password',
+    });
+
     if (!otpRecord) {
       return res.status(400).json({ message: 'OTP expired or not found.' });
     }
@@ -221,7 +258,13 @@ const resetPasswordPhone = async (req, res) => {
       return res.status(400).json({ message: 'Invalid OTP code.' });
     }
 
-    const user = await User.findOne({ phone: formattedPhone });
+    const user = await User.findOne({
+      $or: [
+        { phone: formattedPhone },
+        { phone: rawId },
+        { phone: cleanDigits },
+      ],
+    });
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
     user.password = password;
@@ -237,6 +280,9 @@ const resetPasswordPhone = async (req, res) => {
 // @desc    Send 6-Digit OTP to Email Address
 const sendEmailOTP = async (req, res) => {
   const { email, purpose = 'Verification' } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: 'Email address is required.' });
+  }
   try {
     const formattedEmail = email.toLowerCase().trim();
     const rawOTP = otpService.generate6DigitOTP();
@@ -250,12 +296,14 @@ const sendEmailOTP = async (req, res) => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
     });
 
-    await emailService.sendEmailOTP(formattedEmail, rawOTP, purpose);
+    const emailResult = await emailService.sendEmailOTP(formattedEmail, rawOTP, purpose);
+    const showDebug = !process.env.EMAIL_USER || !emailResult?.success;
+
     res.status(200).json({
       success: true,
-      message: `OTP sent successfully to email: ${formattedEmail}`,
+      message: `OTP generated for email: ${formattedEmail}`,
       email: formattedEmail,
-      ...(!process.env.EMAIL_USER && { debugOTP: rawOTP }),
+      ...(showDebug && { debugOTP: rawOTP }),
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to send Email OTP: ' + error.message });
@@ -265,6 +313,9 @@ const sendEmailOTP = async (req, res) => {
 // @desc    Forgot Password Email OTP
 const forgotPasswordEmailOTP = async (req, res) => {
   const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: 'Email address is required.' });
+  }
   try {
     const formattedEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: formattedEmail });
@@ -301,6 +352,9 @@ const forgotPasswordEmailOTP = async (req, res) => {
 // @desc    Reset Password via Email OTP
 const resetPasswordEmailOTP = async (req, res) => {
   const { email, otp, password } = req.body;
+  if (!email || !otp || !password) {
+    return res.status(400).json({ message: 'Email, OTP, and new password are required.' });
+  }
   try {
     const formattedEmail = email.toLowerCase().trim();
     const otpRecord = await OTP.findOne({ phone: formattedEmail, purpose: 'forgot_password_email' });

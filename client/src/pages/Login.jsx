@@ -19,6 +19,7 @@ const Login = () => {
   // Forgot / Reset Password Modal state
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState('');
+  const [resetCountryCode, setResetCountryCode] = useState('+91');
   const [resetOTP, setResetOTP] = useState('');
   const [demoResetOTP, setDemoResetOTP] = useState('');
   const [otpSent, setOtpSent] = useState(false);
@@ -65,7 +66,7 @@ const Login = () => {
     try {
       const isEmail = resetTarget.includes('@');
       if (isEmail) {
-        const res = await forgotPasswordEmailOTP(resetTarget);
+        const res = await forgotPasswordEmailOTP(resetTarget.trim());
         if (res.debugOTP) {
           setDemoResetOTP(res.debugOTP);
           setResetOTP(res.debugOTP);
@@ -74,7 +75,7 @@ const Login = () => {
           toast.success(res.message || `Reset code sent to ${resetTarget}`);
         }
       } else {
-        const res = await forgotPasswordPhone(resetTarget);
+        const res = await forgotPasswordPhone(resetTarget.trim(), resetCountryCode);
         if (res.debugOTP) {
           setDemoResetOTP(res.debugOTP);
           setResetOTP(res.debugOTP);
@@ -108,14 +109,15 @@ const Login = () => {
       const isEmail = resetTarget.includes('@');
       if (isEmail) {
         await resetPasswordEmailOTP({
-          email: resetTarget,
-          otp: resetOTP,
+          email: resetTarget.trim(),
+          otp: resetOTP.trim(),
           password: newPassword,
         });
       } else {
         await resetPasswordPhone({
-          phone: resetTarget,
-          otp: resetOTP,
+          phone: resetTarget.trim(),
+          countryCode: resetCountryCode,
+          otp: resetOTP.trim(),
           password: newPassword,
         });
       }
@@ -175,16 +177,12 @@ const Login = () => {
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <label className="text-xs text-slate-450 font-bold uppercase">Password</label>
-              <button
-                type="button"
-                onClick={() => {
-                  setResetTarget(identifier);
-                  setForgotModalOpen(true);
-                }}
+              <Link
+                to="/forgot-password"
                 className="text-[11px] font-bold uppercase text-amber-500 hover:underline"
               >
                 Forgot Password?
-              </button>
+              </Link>
             </div>
             <div className="relative">
               <input
