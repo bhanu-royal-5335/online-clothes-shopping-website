@@ -1,0 +1,11 @@
+{
+  "name": "rainbow-fashions-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:client && npm run install:server",
+    "build:client": "cd client && npm install && npm run build",
+    "install:server": "cd server && npm install",
+    "start": "cd server && node server.js"
+  }
+}
