@@ -589,6 +589,9 @@ const resetPasswordEmailOTP = async (req, res) => {
   }
 };
 
+const forgotPassword = forgotPasswordEmailOTP;
+const resetPassword = resetPasswordEmailOTP;
+
 module.exports = {
   registerUser,
   sendRegistrationOTP,
