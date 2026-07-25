@@ -38,37 +38,55 @@ const Profile = ({ defaultTab }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [updating, setUpdating] = useState(false);
 
+  // Sync profile fields when user state updates
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
+    }
+  }, [user]);
+
   // Wishlist products
   const [wishlistProducts, setWishlistProducts] = useState([]);
   const [loadingWishlist, setLoadingWishlist] = useState(false);
 
-  // Load wishlist details when wishlist tab becomes active
+  // Parallel load wishlist details when wishlist tab becomes active
   useEffect(() => {
+    let isMounted = true;
     const fetchWishlist = async () => {
       if (activeTab === 'wishlist' && user?.wishlist?.length > 0) {
         setLoadingWishlist(true);
         try {
-          // Fetch wishlisted products by passing user wishlist IDs
-          const productsData = [];
-          for (const id of user.wishlist) {
+          const promises = user.wishlist.map(async (item) => {
+            const id = typeof item === 'object' && item !== null ? item._id : item;
+            if (!id) return null;
             try {
               const { data } = await api.get(`/api/products/${id}`);
-              productsData.push(data);
+              return data && data._id ? data : null;
             } catch (err) {
-              console.warn(`Failed to retrieve product details for ID: ${id}`);
+              return null;
             }
+          });
+          const results = await Promise.all(promises);
+          if (isMounted) {
+            setWishlistProducts(results.filter(Boolean));
           }
-          setWishlistProducts(productsData);
         } catch (error) {
-          console.error('Wishlist fetch error:', error.message);
+          if (isMounted) setWishlistProducts([]);
         } finally {
-          setLoadingWishlist(false);
+          if (isMounted) setLoadingWishlist(false);
         }
       } else if (activeTab === 'wishlist') {
-        setWishlistProducts([]);
+        if (isMounted) {
+          setWishlistProducts([]);
+          setLoadingWishlist(false);
+        }
       }
     };
     fetchWishlist();
+    return () => {
+      isMounted = false;
+    };
   }, [activeTab, user?.wishlist]);
 
   const handleProfileSubmit = async (e) => {
