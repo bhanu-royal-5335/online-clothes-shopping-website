@@ -89,14 +89,14 @@ const sendRegistrationOTP = async (req, res) => {
 
     // Send SMS via OTP service
     const smsMessage = `Your Rainbow Fashions verification code is: ${rawOTP}. Valid for 5 minutes. Do not share with anyone.`;
-    await otpService.sendSMS(formattedPhone, smsMessage);
+    const smsResult = await otpService.sendSMS(formattedPhone, smsMessage);
 
     res.status(200).json({
       success: true,
       message: `OTP sent successfully to ${formattedPhone}`,
       phone: formattedPhone,
-      // For development/testing ease, include raw OTP if not in production
-      ...(process.env.NODE_ENV !== 'production' && { debugOTP: rawOTP }),
+      // If Twilio API keys are not set, return debugOTP for demo testing
+      ...(!process.env.TWILIO_ACCOUNT_SID && { debugOTP: rawOTP }),
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to send OTP: ' + error.message });
@@ -302,7 +302,7 @@ const forgotPasswordPhone = async (req, res) => {
     res.status(200).json({
       success: true,
       message: `Password reset OTP sent to ${formattedPhone}`,
-      ...(process.env.NODE_ENV !== 'production' && { debugOTP: rawOTP }),
+      ...(!process.env.TWILIO_ACCOUNT_SID && { debugOTP: rawOTP }),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -371,7 +371,7 @@ const resendOTP = async (req, res) => {
     res.status(200).json({
       success: true,
       message: `New OTP sent successfully to ${formattedPhone}`,
-      ...(process.env.NODE_ENV !== 'production' && { debugOTP: rawOTP }),
+      ...(!process.env.TWILIO_ACCOUNT_SID && { debugOTP: rawOTP }),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

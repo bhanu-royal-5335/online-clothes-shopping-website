@@ -30,6 +30,7 @@ const Register = () => {
   // OTP Verification Modal State
   const [showOTPModal, setShowOTPModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
+  const [demoOTP, setDemoOTP] = useState('');
   const [verifyingOTP, setVerifyingOTP] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
 
@@ -71,7 +72,13 @@ const Register = () => {
     try {
       // Step 1: Send OTP to phone
       const data = await sendRegistrationOTP(phone, countryCode);
-      toast.success(data.message || `OTP sent to ${countryCode}${phone}`);
+      if (data.debugOTP) {
+        setDemoOTP(data.debugOTP);
+        setOtpCode(data.debugOTP);
+        toast.success(`Demo Mode OTP Code: ${data.debugOTP}`, { duration: 6000 });
+      } else {
+        toast.success(data.message || `OTP sent to ${countryCode}${phone}`);
+      }
       setShowOTPModal(true);
       setResendTimer(60);
     } catch (error) {
@@ -116,7 +123,13 @@ const Register = () => {
     if (resendTimer > 0) return;
     try {
       const data = await sendRegistrationOTP(phone, countryCode);
-      toast.success('New OTP sent to your phone');
+      if (data.debugOTP) {
+        setDemoOTP(data.debugOTP);
+        setOtpCode(data.debugOTP);
+        toast.success(`Demo Mode OTP: ${data.debugOTP}`, { duration: 6000 });
+      } else {
+        toast.success('New OTP sent to your phone');
+      }
       setResendTimer(60);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to resend OTP');
@@ -289,6 +302,14 @@ const Register = () => {
                   <X className="h-5 w-5" />
                 </button>
               </div>
+
+              {demoOTP && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 text-center space-y-0.5">
+                  <span className="text-[10px] uppercase font-bold text-amber-400">Demo / Testing Gateway Code</span>
+                  <div className="text-xl font-extrabold tracking-widest text-amber-300">{demoOTP}</div>
+                  <p className="text-[9px] text-slate-400">Pre-filled for easy testing. Configure Twilio in Render env for real mobile carrier SMS.</p>
+                </div>
+              )}
 
               <form onSubmit={handleVerifyOTP} className="space-y-4 text-center">
                 <div className="space-y-2">
