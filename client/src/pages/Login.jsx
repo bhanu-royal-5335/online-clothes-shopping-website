@@ -17,7 +17,7 @@ const COUNTRY_CODES = [
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, login, loginPhone, forgotPasswordPhone, resetPasswordPhone } = useAuth();
+  const { user, login, loginPhone, forgotPasswordPhone, resetPasswordPhone, forgotPasswordEmailOTP, resetPasswordEmailOTP } = useAuth();
 
   // Login Mode Tab
   const [loginMethod, setLoginMethod] = useState('phone'); // 'phone' | 'email'
@@ -39,6 +39,7 @@ const Login = () => {
   const [resetMethod, setResetMethod] = useState('phone'); // 'phone' | 'email'
   const [resetTarget, setResetTarget] = useState('');
   const [resetOTP, setResetOTP] = useState('');
+  const [demoResetOTP, setDemoResetOTP] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -103,12 +104,24 @@ const Login = () => {
     try {
       if (resetMethod === 'phone') {
         const res = await forgotPasswordPhone(resetTarget, countryCode);
+        if (res.debugOTP) {
+          setDemoResetOTP(res.debugOTP);
+          setResetOTP(res.debugOTP);
+          toast.success(`Demo Mode Reset OTP: ${res.debugOTP}`, { duration: 6000 });
+        } else {
+          toast.success(res.message || `Reset OTP sent to ${resetTarget}`);
+        }
         setOtpSent(true);
-        toast.success(res.message || `Reset OTP sent to ${resetTarget}`);
       } else {
-        await axios.post('/api/auth/forgot-password', { email: resetTarget });
-        toast.success('Password reset instructions sent to your email.');
-        setForgotModalOpen(false);
+        const res = await forgotPasswordEmailOTP(resetTarget);
+        if (res.debugOTP) {
+          setDemoResetOTP(res.debugOTP);
+          setResetOTP(res.debugOTP);
+          toast.success(`Demo Mode Reset OTP: ${res.debugOTP}`, { duration: 6000 });
+        } else {
+          toast.success(res.message || `Password reset 6-digit OTP sent to your email`);
+        }
+        setOtpSent(true);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send reset code');
@@ -117,7 +130,7 @@ const Login = () => {
     }
   };
 
-  const handleResetPasswordPhone = async (e) => {
+  const handleResetPasswordSubmit = async (e) => {
     e.preventDefault();
     if (!resetOTP || !newPassword) {
       toast.error('Please enter OTP and new password');
@@ -131,18 +144,27 @@ const Login = () => {
 
     setResetLoading(true);
     try {
-      await resetPasswordPhone({
-        phone: resetTarget,
-        countryCode,
-        otp: resetOTP,
-        password: newPassword,
-      });
+      if (resetMethod === 'phone') {
+        await resetPasswordPhone({
+          phone: resetTarget,
+          countryCode,
+          otp: resetOTP,
+          password: newPassword,
+        });
+      } else {
+        await resetPasswordEmailOTP({
+          email: resetTarget,
+          otp: resetOTP,
+          password: newPassword,
+        });
+      }
 
       toast.success('Password reset successfully! Please sign in with your new password.');
       setForgotModalOpen(false);
       setOtpSent(false);
       setResetTarget('');
       setResetOTP('');
+      setDemoResetOTP('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
@@ -411,7 +433,13 @@ const Login = () => {
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleResetPasswordPhone} className="space-y-3.5">
+                <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
+                  {demoResetOTP && (
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2.5 text-center space-y-0.5">
+                      <span className="text-[10px] uppercase font-bold text-amber-400">Demo Mode Reset Code</span>
+                      <div className="text-lg font-extrabold tracking-widest text-amber-300">{demoResetOTP}</div>
+                    </div>
+                  )}
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-400 uppercase">Enter 6-Digit OTP</label>
                     <input

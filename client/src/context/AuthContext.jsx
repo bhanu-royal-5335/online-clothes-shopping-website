@@ -78,6 +78,18 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  // Send Forgot Password OTP to Email / Gmail
+  const forgotPasswordEmailOTP = async (email) => {
+    const { data } = await api.post('/api/auth/forgot-password-email-otp', { email });
+    return data;
+  };
+
+  // Reset Password via Email OTP
+  const resetPasswordEmailOTP = async (resetData) => {
+    const { data } = await api.post('/api/auth/reset-password-email-otp', resetData);
+    return data;
+  };
+
   const logout = async () => {
     try {
       await api.post('/api/auth/logout');
@@ -138,6 +150,8 @@ export const AuthProvider = ({ children }) => {
         verifyRegistrationOTPAndRegister,
         forgotPasswordPhone,
         resetPasswordPhone,
+        forgotPasswordEmailOTP,
+        resetPasswordEmailOTP,
         logout,
         updateProfile,
         verifyEmail,

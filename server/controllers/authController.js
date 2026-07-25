@@ -481,31 +481,110 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-// @desc    Forgot Password Email
-const forgotPassword = async (req, res) => {
-  const { email } = req.body;
+const emailService = require('../services/emailService');
+
+// @desc    Send 6-Digit OTP to Email Address
+// @route   POST /api/auth/send-email-otp
+// @access  Public
+const sendEmailOTP = async (req, res) => {
+  const { email, purpose = 'Verification' } = req.body;
+
   try {
-    const user = await User.findOne({ email });
+    const formattedEmail = email.toLowerCase().trim();
+
+    const rawOTP = otpService.generate6DigitOTP();
+    const hashedOTP = await bcrypt.hash(rawOTP, 10);
+
+    await OTP.deleteMany({ phone: formattedEmail, purpose: 'email_verification' });
+
+    await OTP.create({
+      phone: formattedEmail,
+      otp: hashedOTP,
+      purpose: 'email_verification',
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    await emailService.sendEmailOTP(formattedEmail, rawOTP, purpose);
+
+    res.status(200).json({
+      success: true,
+      message: `OTP sent successfully to email: ${formattedEmail}`,
+      email: formattedEmail,
+      ...(!process.env.EMAIL_USER && { debugOTP: rawOTP }),
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to send Email OTP: ' + error.message });
+  }
+};
+
+// @desc    Forgot Password Email OTP
+// @route   POST /api/auth/forgot-password-email-otp
+// @access  Public
+const forgotPasswordEmailOTP = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const formattedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: formattedEmail });
+
     if (!user) {
       return res.status(404).json({ message: 'User with this email does not exist' });
     }
-    res.json({ message: 'Reset link sent to your email.' });
+
+    const rawOTP = otpService.generate6DigitOTP();
+    const hashedOTP = await bcrypt.hash(rawOTP, 10);
+
+    await OTP.deleteMany({ phone: formattedEmail, purpose: 'forgot_password_email' });
+
+    await OTP.create({
+      phone: formattedEmail,
+      otp: hashedOTP,
+      purpose: 'forgot_password_email',
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    await emailService.sendEmailOTP(formattedEmail, rawOTP, 'Password Reset');
+
+    res.status(200).json({
+      success: true,
+      message: `Password reset OTP sent to email: ${formattedEmail}`,
+      ...(!process.env.EMAIL_USER && { debugOTP: rawOTP }),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Reset Password Email
-const resetPassword = async (req, res) => {
-  const { email, password } = req.body;
+// @desc    Reset Password via Email OTP
+// @route   POST /api/auth/reset-password-email-otp
+// @access  Public
+const resetPasswordEmailOTP = async (req, res) => {
+  const { email, otp, password } = req.body;
+
   try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const formattedEmail = email.toLowerCase().trim();
+
+    const otpRecord = await OTP.findOne({ phone: formattedEmail, purpose: 'forgot_password_email' });
+    if (!otpRecord) {
+      return res.status(400).json({ message: 'OTP expired or not found. Please request a new OTP.' });
     }
+
+    const isMatch = await otpRecord.matchOTP(otp);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid OTP code.' });
+    }
+
+    const user = await User.findOne({ email: formattedEmail });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
     user.password = password;
     await user.save();
-    res.json({ message: 'Password reset successfully!' });
+
+    await OTP.deleteOne({ _id: otpRecord._id });
+
+    res.json({ message: 'Password reset successfully! You can now log in.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -515,6 +594,9 @@ module.exports = {
   registerUser,
   sendRegistrationOTP,
   verifyRegistrationOTPAndRegister,
+  sendEmailOTP,
+  forgotPasswordEmailOTP,
+  resetPasswordEmailOTP,
   loginUser,
   loginPhone,
   forgotPasswordPhone,

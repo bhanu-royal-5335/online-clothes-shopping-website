@@ -4,6 +4,9 @@ const {
   registerUser,
   sendRegistrationOTP,
   verifyRegistrationOTPAndRegister,
+  sendEmailOTP,
+  forgotPasswordEmailOTP,
+  resetPasswordEmailOTP,
   loginUser,
   loginPhone,
   forgotPasswordPhone,
@@ -32,6 +35,9 @@ const { authLimiter } = require('../middleware/rateLimiter');
 router.post('/register', authLimiter, registerValidator, registerUser);
 router.post('/login', authLimiter, loginValidator, loginUser);
 router.post('/login-email', authLimiter, loginValidator, loginUser);
+router.post('/send-email-otp', authLimiter, sendEmailOTP);
+router.post('/forgot-password-email-otp', authLimiter, forgotPasswordEmailOTP);
+router.post('/reset-password-email-otp', authLimiter, resetPasswordEmailOTP);
 
 // Phone Auth Endpoints
 router.post('/send-registration-otp', authLimiter, sendOTPValidator, sendRegistrationOTP);
