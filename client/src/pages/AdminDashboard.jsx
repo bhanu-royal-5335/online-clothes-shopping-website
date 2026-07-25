@@ -17,6 +17,9 @@ import {
   Layers,
   ShoppingBasket,
   FileCheck2,
+  Upload,
+  X,
+  ImageIcon,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../utils/api';
