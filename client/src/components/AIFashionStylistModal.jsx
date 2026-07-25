@@ -322,7 +322,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="w-vw h-vh w-full h-full flex flex-col bg-slate-950 text-slate-100 rounded-none m-0 p-0 overflow-hidden"
+            className="w-full h-full flex flex-col bg-slate-950 text-slate-100 rounded-none m-0 p-0 overflow-hidden"
           >
             {/* 1. FIXED HEADER */}
             <header className="h-16 px-4 sm:px-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/90 shrink-0 z-20">
@@ -357,9 +357,9 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
             </header>
 
             {/* 2. MAIN BODY (LEFT 30% / RIGHT 70% SPLIT LAYOUT) */}
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full min-h-0">
               {/* ================= LEFT PANEL (30%) ================= */}
-              <aside className="w-full md:w-[30%] lg:w-[30%] xl:w-[28%] border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/80 p-4 sm:p-5 flex flex-col overflow-y-auto space-y-5 shrink-0">
+              <aside className="w-full md:w-[30%] lg:w-[30%] xl:w-[28%] border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/80 p-4 sm:p-5 flex flex-col overflow-y-auto space-y-5 shrink-0 min-h-0">
                 {/* Photo Upload & Camera Dropzone */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -560,9 +560,9 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
               </aside>
 
               {/* ================= RIGHT PANEL (70%) ================= */}
-              <main className="w-full md:w-[70%] lg:w-[70%] xl:w-[72%] flex flex-col bg-slate-900/90 overflow-hidden flex-1">
+              <main className="w-full md:w-[70%] lg:w-[70%] xl:w-[72%] flex flex-col bg-slate-900/90 overflow-hidden flex-1 min-h-0">
                 {/* Mode Selector Sub-Tabs Navigation */}
-                <div className="flex border-b border-slate-800 bg-slate-950/60 px-4 sm:px-6 pt-3 space-x-2 overflow-x-auto shrink-0">
+                <div className="flex border-b border-slate-800 bg-slate-950/60 px-4 sm:px-6 pt-3 space-x-2 overflow-x-auto shrink-0 z-10">
                   {[
                     { id: 'chat', label: '💬 AI Chat & Stylist', icon: Bot },
                     { id: 'recommendations', label: `🛍️ Catalog (${analysisResult?.recommendations?.length || 0})`, icon: ShoppingBag },
@@ -593,12 +593,12 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* TAB CONTENT AREA */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col">
+                <div className="flex-1 overflow-hidden min-h-0 p-4 sm:p-6 flex flex-col">
                   {/* TAB 1: INTERACTIVE CHAT (ChatGPT / Gemini / Claude Style) */}
                   {activeTab === 'chat' && (
-                    <div className="flex-1 flex flex-col justify-between overflow-hidden space-y-4">
+                    <div className="flex-1 flex flex-col justify-between overflow-hidden min-h-0 space-y-4">
                       {/* Messages Log Container */}
-                      <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                      <div className="flex-1 overflow-y-auto min-h-0 pr-2 space-y-4 pt-1 pb-1">
                         {chatMessages.map((msg) => (
                           <div
                             key={msg.id}
@@ -734,7 +734,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
 
                   {/* TAB 2: STORE RECOMMENDATIONS */}
                   {activeTab === 'recommendations' && (
-                    <div className="space-y-5">
+                    <div className="flex-1 overflow-y-auto min-h-0 space-y-5 pr-1">
                       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                         <div>
                           <h3 className="text-sm font-extrabold text-white font-display">Matching Store Catalog</h3>
@@ -811,7 +811,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
 
                   {/* TAB 3: VIRTUAL TRY-ON */}
                   {activeTab === 'tryon' && (
-                    <div className="space-y-6">
+                    <div className="flex-1 overflow-y-auto min-h-0 space-y-6 pr-1">
                       <div className="border-b border-slate-800 pb-3 flex justify-between items-center">
                         <div>
                           <h3 className="text-sm font-extrabold text-white font-display flex items-center gap-2">
@@ -905,7 +905,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
 
                   {/* TAB 4: OUTFIT BUNDLES */}
                   {activeTab === 'outfits' && (
-                    <div className="space-y-6">
+                    <div className="flex-1 overflow-y-auto min-h-0 space-y-6 pr-1">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Choose Target Occasion</label>
                         <div className="flex flex-wrap gap-2">
@@ -989,7 +989,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
 
                   {/* TAB 5: FIT & SIZE ESTIMATOR */}
                   {activeTab === 'size' && (
-                    <div className="max-w-xl mx-auto space-y-6 w-full my-auto">
+                    <div className="flex-1 overflow-y-auto min-h-0 space-y-6 max-w-xl mx-auto w-full my-auto pr-1">
                       <div className="bg-slate-950/60 border border-slate-800 rounded-3xl p-6 space-y-5 shadow-2xl">
                         <h3 className="text-sm font-extrabold text-amber-400 uppercase tracking-wider flex items-center space-x-2">
                           <Ruler className="h-4 w-4" />
