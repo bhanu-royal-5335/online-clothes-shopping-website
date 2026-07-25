@@ -7,6 +7,7 @@ const {
   getOrders,
   updateOrderStatus,
   createPaymentIntent,
+  generateInvoicePDF,
 } = require('../controllers/orderController');
 const { protect, admin } = require('../middleware/auth');
 const { orderValidator } = require('../middleware/validation');
@@ -20,6 +21,8 @@ router.post('/payment-intent', protect, createPaymentIntent);
 
 router.route('/:id')
   .get(protect, getOrderById);
+
+router.get('/:id/invoice', protect, generateInvoicePDF);
 
 router.route('/:id/status')
   .put(protect, admin, updateOrderStatus);

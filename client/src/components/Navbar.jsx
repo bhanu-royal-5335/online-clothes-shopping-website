@@ -17,9 +17,11 @@ import {
   Sliders,
   PackageCheck,
   LayoutGrid,
+  Sparkles,
 } from 'lucide-react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import AIFashionStylistModal from './AIFashionStylistModal';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -38,6 +40,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
 
   const dropdownRef = useRef(null);
   const searchRef = useRef(null);
@@ -118,11 +121,24 @@ const Navbar = () => {
             <Link to="/shop" className="text-slate-600 dark:text-slate-300 hover:text-primary-500 transition-colors">
               Shop
             </Link>
+            <button
+              onClick={() => setAiModalOpen(true)}
+              className="bg-gradient-to-r from-amber-500/20 to-primary-600/20 border border-amber-500/40 text-amber-400 font-extrabold text-xs px-3 py-1.5 rounded-full flex items-center space-x-1.5 hover:scale-105 transition-all shadow-sm"
+            >
+              <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+              <span>AI Stylist</span>
+            </button>
             {user?.role === 'admin' && (
-              <Link to="/admin" className="text-slate-600 dark:text-slate-300 hover:text-primary-500 flex items-center space-x-1.5 transition-colors">
-                <Sliders className="h-4 w-4" />
-                <span>Admin Panel</span>
-              </Link>
+              <>
+                <Link to="/admin" className="text-slate-600 dark:text-slate-300 hover:text-primary-500 flex items-center space-x-1.5 transition-colors">
+                  <Sliders className="h-4 w-4" />
+                  <span>Admin</span>
+                </Link>
+                <Link to="/admin/ai" className="text-amber-400 hover:text-amber-300 flex items-center space-x-1 transition-colors text-xs font-bold">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>AI Stats</span>
+                </Link>
+              </>
             )}
           </div>
 
@@ -342,6 +358,9 @@ const Navbar = () => {
           )}
         </div>
       )}
+
+      {/* AI Stylist Pro Multi-Modal Interface */}
+      <AIFashionStylistModal isOpen={aiModalOpen} onClose={() => setAiModalOpen(false)} />
     </nav>
   );
 };

@@ -26,6 +26,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
+        display: ['Outfit', 'sans-serif'],
       },
       boxShadow: {
         glass: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',

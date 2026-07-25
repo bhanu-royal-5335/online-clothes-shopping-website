@@ -182,6 +182,92 @@ const createPaymentIntent = async (req, res) => {
   }
 };
 
+// @desc    Generate printable HTML / PDF Invoice payload
+// @route   GET /api/orders/:id/invoice
+// @access  Private
+const generateInvoicePDF = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user', 'name email');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to download this invoice' });
+    }
+
+    const htmlInvoice = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice #${order._id}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; color: #1e293b; background: #fff; }
+          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
+          .title { font-size: 24px; font-weight: bold; color: #d4af37; }
+          .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          .table th, .table td { border-bottom: 1px solid #cbd5e1; padding: 12px; text-align: left; font-size: 14px; }
+          .table th { background: #f8fafc; font-weight: 600; }
+          .total { text-align: right; margin-top: 30px; font-size: 18px; font-weight: bold; color: #0f172a; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="title">Rainbow Fashions</div>
+            <div>Enterprise E-Commerce Invoice</div>
+          </div>
+          <div style="text-align: right;">
+            <div><strong>Invoice ID:</strong> #${order._id}</div>
+            <div><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</div>
+          </div>
+        </div>
+
+        <div>
+          <strong>Billed To:</strong> ${order.user.name} (${order.user.email})<br/>
+          <strong>Shipping Address:</strong> ${order.shippingAddress.street}, ${order.shippingAddress.city}, ${order.shippingAddress.country}
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item Description</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.orderItems
+              .map(
+                (item) => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.qty}</td>
+                <td>$${item.price.toFixed(2)}</td>
+                <td>$${(item.qty * item.price).toFixed(2)}</td>
+              </tr>
+            `
+              )
+              .join('')}
+          </tbody>
+        </table>
+
+        <div class="total">
+          Total Amount Paid: $${order.totalPrice.toFixed(2)}
+        </div>
+      </body>
+      </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(htmlInvoice);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addOrderItems,
   getOrderById,
@@ -189,4 +275,5 @@ module.exports = {
   getOrders,
   updateOrderStatus,
   createPaymentIntent,
+  generateInvoicePDF,
 };

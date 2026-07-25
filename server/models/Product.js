@@ -140,11 +140,31 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Multi-tenant & Soft Delete Enterprise Fields
+    tenantId: {
+      type: String,
+      default: 'default-tenant',
+      index: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Performance Compound Indexes for High Concurrency Queries
+productSchema.index({ category: 1, price: 1, isDeleted: 1 });
+productSchema.index({ name: 'text', description: 'text', brand: 'text' });
+productSchema.index({ tenantId: 1, featured: -1, createdAt: -1 });
 
 // Auto-adjust availability based on stockQuantity
 productSchema.pre('save', function (next) {

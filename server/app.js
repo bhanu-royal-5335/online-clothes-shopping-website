@@ -7,6 +7,7 @@ const morgan = require('morgan');
 
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const { apiLimiter } = require('./middleware/rateLimiter');
+const { mongoSanitize, securityHeaders } = require('./middleware/security');
 
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
@@ -66,6 +67,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Security headers & input sanitization
+app.use(securityHeaders);
+app.use(mongoSanitize);
+
 // Rate Limiting
 app.use('/api', apiLimiter);
 
@@ -73,6 +78,7 @@ app.use('/api', apiLimiter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const vendorRoutes = require('./routes/vendorRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 // Core api routes
 app.use('/api/auth', authRoutes);
@@ -82,6 +88,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/vendors', vendorRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Welcome landing route for API root
 app.get('/', (req, res) => {

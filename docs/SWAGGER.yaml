@@ -1,0 +1,162 @@
+openapi: 3.0.3
+info:
+  title: Rainbow Fashions Enterprise E-Commerce SaaS API
+  description: |
+    Production-grade RESTful API specification for the Rainbow Fashions Multi-Vendor E-Commerce SaaS Platform.
+    Supports JWT Cookie authentication, Role-Based Access Control (RBAC), Product Cataloging, Multi-Vendor Management,
+    Cart, Checkout (Stripe/COD), Reviews, Wishlist, and AI Personalization services.
+  version: 1.0.0
+  contact:
+    name: Rainbow Fashions Enterprise Engineering
+    email: api-support@rainbowfashions.com
+servers:
+  - url: http://localhost:5000/api
+    description: Local Development Server
+  - url: https://rainbow-fashions-api.onrender.com/api
+    description: Production Server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, example: "John Doe" }
+                email: { type: string, example: "john@example.com" }
+                password: { type: string, example: "Secret123!" }
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Validation error or User already exists
+
+  /auth/login:
+    post:
+      summary: Login user & set HTTP-Only security cookies
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, example: "john@example.com" }
+                password: { type: string, example: "Secret123!" }
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid email or password
+
+  /auth/refresh:
+    post:
+      summary: Refresh JWT access token using refreshToken cookie
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Token refreshed successfully
+        '401':
+          description: Invalid or expired refresh token
+
+  /products:
+    get:
+      summary: Get paginated product catalog with search and filters
+      tags:
+        - Products
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 12 }
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: minPrice
+          schema: { type: number }
+        - in: query
+          name: maxPrice
+          schema: { type: number }
+      responses:
+        '200':
+          description: Catalog returned successfully
+    post:
+      summary: Create new product (Vendor/Admin)
+      tags:
+        - Products
+      security:
+        - cookieAuth: []
+      responses:
+        '201':
+          description: Product created successfully
+
+  /products/{id}:
+    get:
+      summary: Get product details by ID
+      tags:
+        - Products
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Product details
+        '404':
+          description: Product not found
+
+  /orders:
+    post:
+      summary: Create customer order
+      tags:
+        - Orders
+      security:
+        - cookieAuth: []
+      responses:
+        '201':
+          description: Order created
+    get:
+      summary: Get user orders or all orders (Admin)
+      tags:
+        - Orders
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: List of orders
+
+  /vendors/register:
+    post:
+      summary: Apply for Vendor / Seller account
+      tags:
+        - Multi-Vendor
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Application submitted
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
