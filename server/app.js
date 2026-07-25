@@ -90,19 +90,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/ai', aiRoutes);
 
-// Welcome landing route for API root
-app.get('/', (req, res) => {
-  res.send(`
-    <div style="font-family: sans-serif; text-align: center; padding: 50px; background-color: #0a0a0a; color: #fff; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0;">
-      <h1 style="color: #d4af37; font-size: 2.5rem; margin-bottom: 10px;">Rainbow Fashions API</h1>
-      <p style="color: #a0a0a0; font-size: 1.1rem; max-width: 500px; line-height: 1.6;">
-        The Express backend server is running successfully. Please access the React frontend client application to experience the store interface.
-      </p>
-      <a href="/api/health" style="margin-top: 20px; color: #d4af37; font-weight: bold; text-decoration: none; border: 1px solid #d4af37; padding: 8px 16px; rounded: 8px;">Check Health Status</a>
-    </div>
-  `);
-});
-
 // Basic health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
@@ -111,6 +98,32 @@ app.get('/api/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development',
   });
 });
+
+// Serve client static dist build and handle SPA client-side routing fallback
+const clientDistPath = path.join(__dirname, '../client/dist');
+if (require('fs').existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+
+  app.get('*', (req, res, next) => {
+    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+} else {
+  // Welcome landing route for API root when static client isn't bundled in container
+  app.get('/', (req, res) => {
+    res.send(`
+      <div style="font-family: sans-serif; text-align: center; padding: 50px; background-color: #0a0a0a; color: #fff; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0;">
+        <h1 style="color: #d4af37; font-size: 2.5rem; margin-bottom: 10px;">Rainbow Fashions API</h1>
+        <p style="color: #a0a0a0; font-size: 1.1rem; max-width: 500px; line-height: 1.6;">
+          The Express backend server is running successfully. Please access the React frontend client application to experience the store interface.
+        </p>
+        <a href="/api/health" style="margin-top: 20px; color: #d4af37; font-weight: bold; text-decoration: none; border: 1px solid #d4af37; padding: 8px 16px; rounded: 8px;">Check Health Status</a>
+      </div>
+    `);
+  });
+}
 
 // Fallback handlers
 app.use(notFound);
