@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { User, Key, Heart, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -6,10 +7,29 @@ import ProductCard from '../components/ProductCard';
 import { ProductSkeleton } from '../components/SkeletonLoader';
 import toast from 'react-hot-toast';
 
-const Profile = () => {
+const Profile = ({ defaultTab }) => {
   const { user, updateProfile, verifyEmail } = useAuth();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'wishlist'
+  const getInitialTab = () => {
+    if (defaultTab) return defaultTab;
+    const tabParam = searchParams.get('tab');
+    if (tabParam) return tabParam;
+    if (location.pathname === '/wishlist') return 'wishlist';
+    return 'profile';
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    } else if (location.pathname === '/wishlist' || defaultTab === 'wishlist') {
+      setActiveTab('wishlist');
+    }
+  }, [searchParams, location.pathname, defaultTab]);
   
   // Profile inputs
   const [name, setName] = useState(user?.name || '');

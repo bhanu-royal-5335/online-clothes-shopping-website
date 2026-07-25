@@ -73,6 +73,14 @@ function App() {
               }
             />
             <Route
+              path="/wishlist"
+              element={
+                <ProtectedRoute>
+                  <Profile defaultTab="wishlist" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/orders"
               element={
                 <ProtectedRoute>

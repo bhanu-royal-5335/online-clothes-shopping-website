@@ -202,8 +202,9 @@ const Navbar = () => {
 
             {/* Wishlist Link */}
             <Link
-              to="/profile"
+              to="/wishlist"
               className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full relative transition-colors"
+              title="My Wishlist"
             >
               <Heart className="h-5 w-5" />
               {user?.wishlist?.length > 0 && (
