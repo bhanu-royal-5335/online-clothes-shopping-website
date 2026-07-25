@@ -21,7 +21,6 @@ const Login = () => {
   const [resetTarget, setResetTarget] = useState('');
   const [resetCountryCode, setResetCountryCode] = useState('+91');
   const [resetOTP, setResetOTP] = useState('');
-  const [demoResetOTP, setDemoResetOTP] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -67,22 +66,10 @@ const Login = () => {
       const isEmail = resetTarget.includes('@');
       if (isEmail) {
         const res = await forgotPasswordEmailOTP(resetTarget.trim());
-        if (res.debugOTP) {
-          setDemoResetOTP(res.debugOTP);
-          setResetOTP(res.debugOTP);
-          toast.success(`Demo Mode Reset Code: ${res.debugOTP}`, { duration: 6000 });
-        } else {
-          toast.success(res.message || `Reset code sent to ${resetTarget}`);
-        }
+        toast.success(res.message || `Reset code sent to ${resetTarget}`);
       } else {
         const res = await forgotPasswordPhone(resetTarget.trim(), resetCountryCode);
-        if (res.debugOTP) {
-          setDemoResetOTP(res.debugOTP);
-          setResetOTP(res.debugOTP);
-          toast.success(`Demo Mode Reset Code: ${res.debugOTP}`, { duration: 6000 });
-        } else {
-          toast.success(res.message || `Reset code sent to ${resetTarget}`);
-        }
+        toast.success(res.message || `Reset code sent to ${resetTarget}`);
       }
       setOtpSent(true);
     } catch (error) {
@@ -127,7 +114,6 @@ const Login = () => {
       setOtpSent(false);
       setResetTarget('');
       setResetOTP('');
-      setDemoResetOTP('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
@@ -286,13 +272,6 @@ const Login = () => {
                 </div>
               ) : (
                 <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
-                  {demoResetOTP && (
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2.5 text-center space-y-0.5">
-                      <span className="text-[10px] uppercase font-bold text-amber-400">Demo Mode Reset Code</span>
-                      <div className="text-lg font-extrabold tracking-widest text-amber-300">{demoResetOTP}</div>
-                    </div>
-                  )}
-
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-400 uppercase">Enter 6-Digit OTP Code</label>
                     <input

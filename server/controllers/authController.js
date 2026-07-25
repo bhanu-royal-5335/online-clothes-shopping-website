@@ -217,12 +217,10 @@ const forgotPasswordPhone = async (req, res) => {
     });
 
     const smsResult = await otpService.sendSMS(formattedPhone, `Password Reset OTP: ${rawOTP}`);
-    const showDebug = !process.env.TWILIO_ACCOUNT_SID || !smsResult?.success;
 
     res.status(200).json({
       success: true,
-      message: `Reset OTP generated for ${formattedPhone}`,
-      ...(showDebug && { debugOTP: rawOTP }),
+      message: `Reset OTP sent to ${formattedPhone}`,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -297,13 +295,14 @@ const sendEmailOTP = async (req, res) => {
     });
 
     const emailResult = await emailService.sendEmailOTP(formattedEmail, rawOTP, purpose);
-    const showDebug = !process.env.EMAIL_USER || !emailResult?.success;
+    if (!emailResult.success) {
+      return res.status(400).json({ message: emailResult.error || 'Failed to send OTP to email address.' });
+    }
 
     res.status(200).json({
       success: true,
-      message: `OTP generated for email: ${formattedEmail}`,
+      message: `OTP sent successfully to email address: ${formattedEmail}`,
       email: formattedEmail,
-      ...(showDebug && { debugOTP: rawOTP }),
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to send Email OTP: ' + error.message });
@@ -335,14 +334,13 @@ const forgotPasswordEmailOTP = async (req, res) => {
     });
 
     const emailResult = await emailService.sendEmailOTP(formattedEmail, rawOTP, 'Password Reset');
-    const showDebug = !process.env.EMAIL_USER || !emailResult?.success;
+    if (!emailResult.success) {
+      return res.status(400).json({ message: emailResult.error || 'Failed to send OTP to email address.' });
+    }
 
     res.status(200).json({
       success: true,
-      message: emailResult?.success
-        ? `Password reset OTP sent to email: ${formattedEmail}`
-        : `Reset OTP generated for ${formattedEmail}`,
-      ...(showDebug && { debugOTP: rawOTP }),
+      message: `Password reset OTP sent to email address: ${formattedEmail}`,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
