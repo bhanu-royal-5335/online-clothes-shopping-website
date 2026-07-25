@@ -2,6 +2,7 @@ const User = require('../models/User');
 const OTP = require('../models/OTP');
 const generateTokens = require('../utils/generateToken');
 const otpService = require('../services/otpService');
+const emailService = require('../services/emailService');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -480,8 +481,6 @@ const verifyEmail = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-const emailService = require('../services/emailService');
 
 // @desc    Send 6-Digit OTP to Email Address
 // @route   POST /api/auth/send-email-otp
