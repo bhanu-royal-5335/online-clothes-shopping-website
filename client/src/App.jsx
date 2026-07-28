@@ -1,11 +1,13 @@
-import { lazy, Suspense } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { AnimatePresence } from 'framer-motion';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import ProtectedRoute from './components/ProtectedRoute';
+import OpeningSplash from './components/OpeningSplash';
 
 const Home = lazy(() => import('./pages/Home'));
 const Shop = lazy(() => import('./pages/Shop'));
@@ -22,8 +24,22 @@ const AdminAIDashboard = lazy(() => import('./pages/AdminAIDashboard'));
 const VendorDashboard = lazy(() => import('./pages/VendorDashboard'));
 
 function App() {
+  const [showSplash, setShowSplash] = useState(() => {
+    // Show splash opening animation on session visit
+    return !sessionStorage.getItem('hasSeenOpeningSplash');
+  });
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem('hasSeenOpeningSplash', 'true');
+    setShowSplash(false);
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0b0f19] dark:text-slate-100 transition-colors duration-300">
+    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0b0f19] dark:text-slate-100 transition-colors duration-300 relative">
+      {/* 0. High-End Opening Entrance Splash Animation */}
+      <AnimatePresence>
+        {showSplash && <OpeningSplash onComplete={handleSplashComplete} />}
+      </AnimatePresence>
       {/* Toast Notification Container */}
       <Toaster
         position="top-right"
