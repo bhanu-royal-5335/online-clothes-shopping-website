@@ -120,6 +120,13 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
     }
   }, [chatMessages, isAiTyping, activeTab]);
 
+  // Auto-fetch initial dress catalog & style recommendations when modal opens
+  useEffect(() => {
+    if (isOpen && !analysisResult) {
+      runAIScanner();
+    }
+  }, [isOpen]);
+
   // Helper to get reliable product image
   const getProductImage = (item) => {
     if (item?.images && item.images.length > 0 && item.images[0]) {
