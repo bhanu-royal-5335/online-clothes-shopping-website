@@ -12,25 +12,25 @@ const OpeningSplash = ({ onComplete }) => {
   }, [onComplete]);
 
   useEffect(() => {
-    // Smooth 2.5-second progress counter (25ms * 100 = 2500ms)
+    // Smooth 5.0-second progress counter (50ms * 100 = 5000ms)
     const timer = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(timer);
           return 100;
         }
-        return prev + 2;
+        return prev + 1;
       });
-    }, 25);
+    }, 50);
 
-    // Multi-phase stage progression triggers
-    const stage1 = setTimeout(() => setStage(1), 700);
-    const stage2 = setTimeout(() => setStage(2), 1600);
+    // Multi-phase stage progression triggers across 5 seconds
+    const stage1 = setTimeout(() => setStage(1), 1500);
+    const stage2 = setTimeout(() => setStage(2), 3400);
 
-    // Auto complete callback at 2.6 seconds
+    // Auto complete callback at 5.0 seconds
     const doneTimer = setTimeout(() => {
       if (onCompleteRef.current) onCompleteRef.current();
-    }, 2600);
+    }, 5000);
 
     return () => {
       clearInterval(timer);

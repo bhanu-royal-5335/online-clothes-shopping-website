@@ -34,13 +34,13 @@ function App() {
     setShowSplash(false);
   };
 
-  // Fail-safe safety timer to guarantee website always opens in <= 3s
+  // Fail-safe safety timer to guarantee website opens after 5.5s
   useEffect(() => {
     if (showSplash) {
       const safetyTimer = setTimeout(() => {
         sessionStorage.setItem('hasSeenOpeningSplash', 'true');
         setShowSplash(false);
-      }, 3000);
+      }, 5500);
       return () => clearTimeout(safetyTimer);
     }
   }, [showSplash]);
