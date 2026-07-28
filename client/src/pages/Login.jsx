@@ -200,12 +200,7 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Developer Demo Credentials Footer */}
-        <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-850 p-4 rounded-2xl text-xs text-slate-500 space-y-1.5">
-          <p className="font-extrabold uppercase text-slate-450 tracking-wider">Demo Credentials:</p>
-          <p>• Customer: <span className="font-semibold text-slate-700 dark:text-slate-300">customer@rainbowfashions.com</span> (pw: <span className="font-mono">customer123password</span>)</p>
-          <p>• Admin: <span className="font-semibold text-slate-700 dark:text-slate-300">bhanuroyal177@gmail.com</span> (pw: <span className="font-mono">admin123password</span>)</p>
-        </div>
+
 
         <div className="text-center text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
           Don&apos;t have an account?{' '}
