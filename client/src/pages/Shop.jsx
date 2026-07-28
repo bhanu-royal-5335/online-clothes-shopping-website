@@ -56,7 +56,7 @@ const Shop = () => {
     setLocalBrand(brand);
   }, [minPrice, maxPrice, brand]);
 
-  // Fetch products whenever params or page change
+  // Fetch products whenever params or page change (Append mode for continuous vertical loading)
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -75,10 +75,17 @@ const Shop = () => {
         if (colors) queryParams.set('colors', colors);
         if (gender) queryParams.set('gender', gender);
         queryParams.set('page', page);
-        queryParams.set('pageSize', 6);
+        queryParams.set('pageSize', 24);
 
         const { data } = await api.get(`/api/products?${queryParams.toString()}`);
-        setProducts(data.products || []);
+        const fetchedItems = data.products || [];
+        
+        if (page === 1) {
+          setProducts(fetchedItems);
+        } else {
+          setProducts((prev) => [...prev, ...fetchedItems]);
+        }
+        
         setTotalPages(data.pages || 1);
         setProductCount(data.count || 0);
       } catch (err) {
@@ -89,7 +96,7 @@ const Shop = () => {
     };
 
     fetchProducts();
-  }, [keyword, category, brand, minPrice, maxPrice, rating, inStock, discount, sort, page]);
+  }, [keyword, category, brand, minPrice, maxPrice, rating, inStock, discount, sort, page, sizes, colors, gender]);
 
   // Helper to merge search parameters
   const updateFilters = (newParams) => {
@@ -428,26 +435,35 @@ const Shop = () => {
             )}
           </div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center space-x-2 pt-6">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl disabled:opacity-40 transition-opacity"
-              >
-                <ChevronLeft className="h-4.5 w-4.5" />
-              </button>
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 px-4">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl disabled:opacity-40 transition-opacity"
-              >
-                <ChevronRight className="h-4.5 w-4.5" />
-              </button>
+          {/* Continuous Load More & Progress Bar (No Page Numbers) */}
+          {products.length > 0 && (
+            <div className="flex flex-col items-center justify-center space-y-4 pt-8 pb-12">
+              <div className="w-full max-w-md bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-amber-500 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, Math.round((products.length / (productCount || 1)) * 100))}%` }}
+                />
+              </div>
+
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Showing <span className="font-extrabold text-amber-500">{products.length}</span> of{' '}
+                <span className="font-extrabold text-slate-700 dark:text-slate-200">{productCount || products.length}</span> Outfits & Dresses
+              </p>
+
+              {page < totalPages ? (
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={loading}
+                  className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 font-extrabold text-xs px-8 py-3.5 rounded-2xl shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center space-x-2 uppercase tracking-wider"
+                >
+                  {loading && <RefreshCw className="h-4 w-4 animate-spin" />}
+                  <span>{loading ? 'Loading Next Batch...' : 'Load More Outfits & Dresses'}</span>
+                </button>
+              ) : (
+                <div className="text-xs font-bold text-emerald-500 dark:text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/30">
+                  ✨ You have reached the end of the fashion catalog
+                </div>
+              )}
             </div>
           )}
         </main>
