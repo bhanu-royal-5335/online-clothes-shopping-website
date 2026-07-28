@@ -1146,36 +1146,47 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                        {/* Try-On Display Frame */}
-                        <div className="relative bg-slate-950 border border-slate-800 rounded-3xl p-4 flex flex-col items-center justify-center min-h-[320px] overflow-hidden group shadow-2xl">
-                          {imagePreview ? (
-                            <div className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl">
-                              <img src={imagePreview} alt="User Avatar" className="w-full h-80 object-cover rounded-2xl" />
-                              {selectedTryOnProduct && (
-                                <motion.div
-                                  initial={{ opacity: 0, scale: 0.9 }}
-                                  animate={{ opacity: 0.9, scale: 1 }}
-                                  className="absolute inset-x-4 bottom-4 bg-slate-950/90 backdrop-blur-md p-3 rounded-xl border border-amber-500/50 shadow-2xl flex items-center space-x-3"
-                                >
-                                  <img
-                                    src={getProductImage(selectedTryOnProduct)}
-                                    alt={selectedTryOnProduct.name}
-                                    className="w-12 h-12 object-cover rounded-lg border border-amber-400"
-                                  />
-                                  <div className="flex-1 overflow-hidden text-xs">
-                                    <span className="text-[9px] uppercase font-extrabold text-amber-400 block">Overlaid Garment</span>
-                                    <h4 className="font-bold text-white truncate">{selectedTryOnProduct.name}</h4>
-                                    <span className="text-emerald-400 font-mono text-[10px]">Fit Match: 99%</span>
+                        {/* Try-On Interactive 3D Display Frame */}
+                        <div className="relative bg-slate-950 border border-slate-800 rounded-3xl p-4 flex flex-col items-center justify-center min-h-[380px] overflow-hidden group shadow-2xl">
+                          <div className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl bg-slate-900 border border-slate-800">
+                            {/* Avatar Canvas (User Uploaded Photo or Fashion Model Avatar) */}
+                            <img
+                              src={imagePreview || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80'}
+                              alt="Virtual Fitting Model Avatar"
+                              className="w-full h-96 object-cover rounded-2xl filter brightness-95"
+                            />
+
+                            {/* Laser Mesh Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 pointer-events-none" />
+                            <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+
+                            {/* Real-time Garment Try-On Overlay Badge */}
+                            {selectedTryOnProduct && (
+                              <motion.div
+                                key={selectedTryOnProduct._id || selectedTryOnProduct.name}
+                                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ duration: 0.3 }}
+                                className="absolute inset-x-3 bottom-3 bg-slate-950/95 backdrop-blur-xl p-3.5 rounded-2xl border border-amber-500/50 shadow-2xl flex items-center space-x-3"
+                              >
+                                <img
+                                  src={getProductImage(selectedTryOnProduct)}
+                                  alt={selectedTryOnProduct.name}
+                                  className="w-14 h-14 object-cover rounded-xl border-2 border-amber-400 shrink-0 shadow-md"
+                                />
+                                <div className="flex-1 overflow-hidden text-xs space-y-0.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[9px] uppercase font-extrabold text-amber-400 tracking-wider">3D TRIAL OVERLAY</span>
+                                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/40">
+                                      ⚡ 96.8% ML FIT
+                                    </span>
                                   </div>
-                                </motion.div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-center py-12 text-slate-500 text-xs space-y-2">
-                              <User className="h-10 w-10 text-slate-600 mx-auto" />
-                              <p className="max-w-xs">Upload a selfie or full-body picture on the left panel to unlock Virtual Try-On.</p>
-                            </div>
-                          )}
+                                  <h4 className="font-extrabold text-white truncate text-xs">{selectedTryOnProduct.name}</h4>
+                                  <p className="text-amber-400 font-mono text-[11px] font-bold">{formatCurrency(selectedTryOnProduct.price)}</p>
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
                         </div>
 
                         {/* Item Selector & Action Box */}
