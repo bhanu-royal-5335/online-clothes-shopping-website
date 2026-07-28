@@ -207,43 +207,45 @@ const Navbar = () => {
               title="My Wishlist"
             >
               <Heart className="h-5 w-5" />
-              {user?.wishlist?.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-rose-500 rounded-full"></span>
-              )}
-            </Link>
+              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {darkMode ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5 text-slate-600" />}
+            </button>
 
-            {/* Shopping Cart Icon */}
+            {/* Cart Icon & Counter Badge */}
             <Link
               to="/cart"
               className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full relative transition-colors"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-[10px] font-extrabold h-5 w-5 rounded-full flex items-center justify-center border border-white dark:border-[#0f172a]">
+                <span className="absolute -top-0.5 -right-0.5 bg-primary-500 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
                   {cartCount}
                 </span>
               )}
             </Link>
 
-            {/* User Dropdown Profile Menu */}
+            {/* User Account / Profile Menu */}
             <div ref={dropdownRef} className="relative">
               {user ? (
                 <>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center space-x-1.5 p-1 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="flex items-center space-x-2 text-slate-700 dark:text-slate-200 hover:text-primary-500 transition-colors p-1"
                   >
-                    <div className="h-7 w-7 rounded-full bg-primary-100 dark:bg-primary-950 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
-                      {user.name.charAt(0).toUpperCase()}
+                    <div className="w-8 h-8 rounded-full bg-primary-500/20 border border-primary-500/40 flex items-center justify-center font-bold text-sm text-primary-500 uppercase">
+                      {user.name ? user.name.charAt(0) : 'U'}
                     </div>
+                    <span className="hidden lg:inline text-sm font-semibold truncate max-w-[100px]">{user.name}</span>
+                    <ChevronDown className="h-4 w-4 hidden lg:block text-slate-400" />
                   </button>
 
-                  {/* Dropdown Options */}
+                  {/* Profile Dropdown */}
                   {dropdownOpen && (
-                    <div className="absolute right-0 mt-2.5 w-52 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl shadow-lg p-2 space-y-1">
-                      <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700/50 mb-1">
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{user.name}</p>
-                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                    <div className="absolute right-0 top-14 w-52 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 py-2 px-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-700 mb-1">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
                       </div>
 
                       <Link
@@ -261,7 +263,7 @@ const Navbar = () => {
                         className="flex items-center space-x-2.5 p-2 rounded-xl text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                       >
                         <PackageCheck className="h-4 w-4" />
-                        <span>Order Tracking</span>
+                        <span>My Orders</span>
                       </Link>
 
                       {user.role === 'admin' && (
@@ -309,6 +311,18 @@ const Navbar = () => {
       {/* Mobile Menu Panel */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0b0f19] px-4 py-4 space-y-3 transition-colors duration-300 shadow-md">
+          {/* Mobile AI Stylist Button */}
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setAiModalOpen(true);
+            }}
+            className="w-full bg-gradient-to-r from-amber-500 via-primary-600 to-amber-600 text-slate-950 font-extrabold text-xs py-3 rounded-xl flex items-center justify-center space-x-2 shadow-md"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span>Open AI Stylist Pro</span>
+          </button>
+
           {/* Mobile search */}
           <form onSubmit={handleSearchSubmit} className="relative">
             <input
@@ -328,37 +342,17 @@ const Navbar = () => {
           >
             Shop
           </Link>
-
-          {user?.role === 'admin' && (
-            <Link
-              to="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850 font-medium text-sm"
-            >
-              Admin Dashboard
-            </Link>
-          )}
-
-          {!user && (
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 py-2 rounded-xl text-slate-800 dark:text-slate-200 font-semibold text-sm transition-colors"
-              >
-                Login
-              </Link>
-              <Link
-                to="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-center bg-primary-600 hover:bg-primary-700 py-2 rounded-xl text-white font-semibold text-sm transition-colors"
-              >
-                Sign Up
-              </Link>
-            </div>
-          )}
         </div>
       )}
+
+      {/* Mobile Floating Action Button (FAB) for AI Stylist */}
+      <button
+        onClick={() => setAiModalOpen(true)}
+        className="md:hidden fixed bottom-20 right-4 z-40 bg-gradient-to-r from-amber-500 via-primary-600 to-amber-600 text-slate-950 font-extrabold text-xs px-3.5 py-2.5 rounded-full shadow-2xl shadow-amber-500/30 border border-amber-400/40 flex items-center space-x-1.5 active:scale-95 transition-all"
+      >
+        <Sparkles className="h-4 w-4 animate-bounce text-slate-950" />
+        <span>AI Stylist</span>
+      </button>
 
       {/* AI Stylist Pro Multi-Modal Interface */}
       <AIFashionStylistModal isOpen={aiModalOpen} onClose={() => setAiModalOpen(false)} />
