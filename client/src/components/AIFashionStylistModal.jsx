@@ -37,7 +37,30 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [previousPhotos, setPreviousPhotos] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
+
+  // Drag and drop event handlers for image dropzone
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
 
   // Camera capture states
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -97,6 +120,17 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
     }
   }, [chatMessages, isAiTyping, activeTab]);
 
+  // Helper to get reliable product image
+  const getProductImage = (item) => {
+    if (item?.images && item.images.length > 0 && item.images[0]) {
+      return item.images[0];
+    }
+    if (item?.thumbnail) {
+      return item.thumbnail;
+    }
+    return 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80';
+  };
+
   // Handle file select for photo upload
   const handleFileSelect = (file) => {
     if (!file) return;
@@ -109,6 +143,9 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
       { id: Date.now(), url, file, name: file.name || 'Uploaded Photo' },
       ...prev.filter((p) => p.url !== url),
     ]);
+
+    // Auto-trigger AI scanning upon uploading photo for immediate recommendations
+    runAIScanner(file);
   };
 
   // Start Camera Stream
@@ -146,17 +183,18 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
       const file = new File([blob], `camera_snap_${Date.now()}.jpg`, { type: 'image/jpeg' });
       handleFileSelect(file);
       stopCamera();
-      toast.success('Selfie captured! Click "Analyze Photo Traits" to analyze.');
+      toast.success('Selfie captured! AI scanning started...');
     }, 'image/jpeg');
   };
 
   // Trigger Image AI Scanner Request
-  const runAIScanner = async () => {
+  const runAIScanner = async (fileOverride) => {
+    const fileToScan = fileOverride || selectedImage;
     setIsScanning(true);
     try {
       const formData = new FormData();
-      if (selectedImage) {
-        formData.append('image', selectedImage);
+      if (fileToScan) {
+        formData.append('image', fileToScan);
       }
       formData.append('occasion', selectedOccasion);
 
@@ -166,22 +204,32 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
 
       if (res.data.success) {
         setAnalysisResult(res.data);
-        toast.success('AI Vision Analysis Complete! Features & Recommendations updated.');
+        const recommendations = res.data.recommendations || [];
 
-        // Add a message to chat with analysis summary
+        if (recommendations.length > 0) {
+          setSelectedTryOnProduct(recommendations[0]);
+          toast.success(`AI Vision Analysis Complete! Unlocked ${recommendations.length} matching dresses & outfits.`);
+        } else {
+          toast.success('AI Vision Analysis Complete! Features updated.');
+        }
+
+        // Add a message to chat with analysis summary & recommendations
         const traits = res.data.traits;
-        const aiMsgText = `I've analyzed your photo! 🎨\n\n• **Body Shape**: ${traits.bodyType}\n• **Skin Tone**: ${traits.skinTone}\n• **Style Profile**: ${traits.detectedStyle}\n• **Complementary Colors**: ${traits.complementaryColors.join(', ')}\n• **Recommended Fit**: ${traits.recommendedFits.join(', ')}\n\nI have unlocked ${res.data.recommendations?.length || 0} matching store products for you in the catalog!`;
-        
+        const aiMsgText = `I've analyzed your photo! 🎨\n\n• **Body Shape**: ${traits.bodyType}\n• **Skin Tone**: ${traits.skinTone}\n• **Style Profile**: ${traits.detectedStyle}\n• **Complementary Colors**: ${traits.complementaryColors.join(', ')}\n• **Recommended Fit**: ${traits.recommendedFits.join(', ')}\n\nHere are matching store products and dresses curated for your look:`;
+
         setChatMessages((prev) => [
           ...prev,
           {
             id: Date.now(),
             sender: 'ai',
             text: aiMsgText,
-            recommendations: res.data.recommendations || [],
+            recommendations: recommendations,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           },
         ]);
+
+        // Auto-switch to Catalog recommendations tab so user immediately sees dresses!
+        setActiveTab('recommendations');
       }
     } catch (err) {
       toast.error('AI Analysis Error: ' + (err.response?.data?.message || err.message));
@@ -382,7 +430,14 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                     )}
                   </div>
 
-                  <div className="bg-slate-900/90 border-2 border-dashed border-slate-800 hover:border-amber-500/50 rounded-2xl p-4 text-center transition-colors relative overflow-hidden group">
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`bg-slate-900/90 border-2 border-dashed rounded-2xl p-4 text-center transition-all relative overflow-hidden group ${
+                      isDragging ? 'border-amber-400 bg-amber-500/10 scale-[1.01]' : 'border-slate-800 hover:border-amber-500/50'
+                    }`}
+                  >
                     {isCameraActive ? (
                       <div className="w-full space-y-3">
                         <video ref={videoRef} autoPlay playsInline className="w-full h-44 object-cover rounded-xl border border-slate-700" />
@@ -422,12 +477,12 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                         </div>
 
                         <button
-                          onClick={runAIScanner}
+                          onClick={() => runAIScanner()}
                           disabled={isScanning}
                           className="w-full bg-gradient-to-r from-amber-500 to-primary-600 hover:from-amber-600 hover:to-primary-700 text-slate-950 font-extrabold py-2.5 rounded-xl text-xs shadow-lg flex items-center justify-center space-x-2 transition-all"
                         >
                           <Zap className="h-4 w-4" />
-                          <span>{isScanning ? 'Analyzing Traits...' : 'Analyze Photo Traits'}</span>
+                          <span>{isScanning ? 'Analyzing Traits...' : 'Re-Analyze Photo Traits'}</span>
                         </button>
                       </div>
                     ) : (
@@ -438,7 +493,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                         <div>
                           <h3 className="font-bold text-xs text-slate-200">Upload Selfie or Outfit Photo</h3>
                           <p className="text-[11px] text-slate-500 max-w-xs mt-0.5 mx-auto">
-                            AI analyzes skin undertone, build, and color harmony.
+                            Drag & drop or click to upload. AI analyzes skin undertone, build, and color harmony.
                           </p>
                         </div>
                         <div className="flex justify-center gap-2 pt-1">
@@ -478,6 +533,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                           onClick={() => {
                             setSelectedImage(photo.file || null);
                             setImagePreview(photo.url);
+                            runAIScanner(photo.file);
                           }}
                           className={`relative flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
                             imagePreview === photo.url ? 'border-amber-500 scale-105 shadow-md shadow-amber-500/20' : 'border-slate-800 opacity-70 hover:opacity-100'
@@ -635,13 +691,13 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                               {/* Inline Recommendation Cards inside Chat */}
                               {msg.recommendations && msg.recommendations.length > 0 && (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
-                                  {msg.recommendations.slice(0, 3).map((item) => (
+                                  {msg.recommendations.slice(0, 6).map((item) => (
                                     <div
                                       key={item._id}
                                       className="bg-slate-950 border border-slate-800 hover:border-amber-500/50 rounded-xl p-2.5 transition-all group"
                                     >
                                       <img
-                                        src={item.images?.[0] || item.thumbnail}
+                                        src={getProductImage(item)}
                                         alt={item.name}
                                         className="w-full h-24 object-cover rounded-lg mb-1.5"
                                       />
@@ -755,7 +811,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                               <div>
                                 <div className="relative overflow-hidden rounded-xl mb-2">
                                   <img
-                                    src={item.images?.[0] || item.thumbnail}
+                                    src={getProductImage(item)}
                                     alt={item.name}
                                     className="w-full h-36 object-cover group-hover:scale-105 transition-transform"
                                   />
@@ -799,10 +855,10 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                             Upload a photo on the left panel or run AI Analysis to extract personalized store recommendations.
                           </p>
                           <button
-                            onClick={runAIScanner}
+                            onClick={() => runAIScanner()}
                             className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-5 py-2.5 rounded-xl shadow"
                           >
-                            Analyze Current Photo
+                            Analyze Photo & Load Outfits
                           </button>
                         </div>
                       )}
@@ -837,7 +893,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                                   className="absolute inset-x-4 bottom-4 bg-slate-950/90 backdrop-blur-md p-3 rounded-xl border border-amber-500/50 shadow-2xl flex items-center space-x-3"
                                 >
                                   <img
-                                    src={selectedTryOnProduct.images?.[0] || selectedTryOnProduct.thumbnail}
+                                    src={getProductImage(selectedTryOnProduct)}
                                     alt={selectedTryOnProduct.name}
                                     className="w-12 h-12 object-cover rounded-lg border border-amber-400"
                                   />
@@ -873,7 +929,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                                       : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300'
                                   }`}
                                 >
-                                  <img src={prod.images?.[0]} alt={prod.name} className="w-10 h-10 object-cover rounded-lg" />
+                                  <img src={getProductImage(prod)} alt={prod.name} className="w-10 h-10 object-cover rounded-lg" />
                                   <div className="flex-1 text-xs">
                                     <h5 className="font-bold truncate">{prod.name}</h5>
                                     <span className="text-amber-400 font-mono text-[11px]">{formatCurrency(prod.price)}</span>
@@ -959,7 +1015,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
                                 {entry.product ? (
                                   <>
                                     <img
-                                      src={entry.product.images?.[0] || entry.product.thumbnail}
+                                      src={getProductImage(entry.product)}
                                       alt={entry.product.name}
                                       className="w-full h-36 object-cover rounded-xl"
                                     />

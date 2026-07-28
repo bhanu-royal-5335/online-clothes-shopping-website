@@ -67,34 +67,48 @@ const analyzeImageTraits = async (fileBufferOrPath, fileName = '') => {
  * Recommends products strictly from the database matching the user's analyzed traits
  */
 const recommendProductsFromDB = async ({ skinTone, bodyType, style, occasion, limit = 8 }) => {
-  const compColors = COLOR_HARMONY_MAP[skinTone] || [];
+  const compColors = COLOR_HARMONY_MAP[skinTone] || ['Navy', 'Black', 'Emerald', 'Red', 'Blue', 'Beige'];
   
-  // Base strict query for in-stock, active products
+  // Create regex pattern for colors to do partial/case-insensitive matching
+  const colorPattern = compColors.join('|');
+
+// Base query for active products
   const baseQuery = {
     isDeleted: { $ne: true },
-    availability: true,
-    stockQuantity: { $gt: 0 },
   };
 
-  // 1. Primary search with color/style filters
-  let products = await Product.find({
-    ...baseQuery,
-    $or: [
-      { colors: { $in: compColors } },
-      { gender: { $in: ['Unisex', 'Men', 'Women'] } },
-      { name: new RegExp(style || 'Casual', 'i') },
-      { description: new RegExp(occasion || 'Casual', 'i') },
-    ],
-  })
-    .populate('category', 'name')
-    .sort({ ratings: -1, createdAt: -1 })
-    .limit(limit);
+  // 1. Primary search with color/style/gender/occasion filters
+  let products = [];
+  try {
+    products = await Product.find({
+      ...baseQuery,
+      $or: [
+        { colors: { $elemMatch: { $regex: colorPattern, $options: 'i' } } },
+        { gender: { $in: ['Unisex', 'Men', 'Women'] } },
+        { name: new RegExp(style || 'Casual', 'i') },
+        { description: new RegExp(occasion || 'Casual', 'i') },
+        { categoryName: new RegExp('Dress|Top|Shirt|Coat|Suit|Pant', 'i') },
+      ],
+    })
+      .populate('category', 'name')
+      .sort({ ratings: -1, createdAt: -1 })
+      .limit(limit);
+  } catch (err) {
+    console.error('Primary product recommendation query error:', err);
+  }
 
-  // Fallback to top rated in-stock products if matching count is small
+  // Fallback to top rated products if matching count is small (< 3)
   if (!products || products.length < 3) {
     products = await Product.find(baseQuery)
       .populate('category', 'name')
-      .sort({ ratings: -1, featured: -1 })
+      .sort({ ratings: -1, featured: -1, createdAt: -1 })
+      .limit(limit);
+  }
+
+  // Double fallback to ensure recommendations never return empty if products exist
+  if (!products || products.length === 0) {
+    products = await Product.find({})
+      .populate('category', 'name')
       .limit(limit);
   }
 
@@ -102,50 +116,65 @@ const recommendProductsFromDB = async ({ skinTone, bodyType, style, occasion, li
 };
 
 /**
- * Generates a complete 4-piece outfit (Top, Bottom, Shoes/Jacket, Accessories)
+ * Generates a complete 4-piece outfit (Top/Dress, Bottomwear, Jacket/Accessories)
  * ONLY using products available in MongoDB
  */
 const generateOutfitBundleFromDB = async ({ occasion = 'Casual', gender = 'Unisex' }) => {
   const baseQuery = {
     isDeleted: { $ne: true },
-    availability: true,
-    stockQuantity: { $gt: 0 },
   };
 
-  // Search by category or keywords for top, bottom, and accessories
-  const allInStock = await Product.find(baseQuery).populate('category', 'name');
+  const allProducts = await Product.find(baseQuery).populate('category', 'name');
 
-  const tops = allInStock.filter(
+  if (!allProducts || allProducts.length === 0) {
+    return {
+      occasion,
+      outfitName: `${occasion} Signature Ensemble`,
+      items: [],
+      bundleTotalPrice: 0,
+      savingsPercentage: 15,
+      bundleDiscountedPrice: 0,
+    };
+  }
+
+  const tops = allProducts.filter(
     (p) =>
       p.category?.name?.toLowerCase().includes('shirt') ||
       p.category?.name?.toLowerCase().includes('top') ||
+      p.category?.name?.toLowerCase().includes('women') ||
+      p.category?.name?.toLowerCase().includes('men') ||
       p.name.toLowerCase().includes('shirt') ||
-      p.name.toLowerCase().includes('t-shirt') ||
+      p.name.toLowerCase().includes('dress') ||
+      p.name.toLowerCase().includes('gown') ||
+      p.name.toLowerCase().includes('suit') ||
+      p.name.toLowerCase().includes('coat') ||
       p.name.toLowerCase().includes('hoodie')
   );
 
-  const bottoms = allInStock.filter(
+  const bottoms = allProducts.filter(
     (p) =>
       p.category?.name?.toLowerCase().includes('pant') ||
       p.category?.name?.toLowerCase().includes('jean') ||
       p.category?.name?.toLowerCase().includes('trouser') ||
       p.name.toLowerCase().includes('jean') ||
-      p.name.toLowerCase().includes('pant')
+      p.name.toLowerCase().includes('pant') ||
+      p.name.toLowerCase().includes('skirt') ||
+      p.name.toLowerCase().includes('chinos')
   );
 
-  const accessories = allInStock.filter(
+  const accessories = allProducts.filter(
     (p) =>
       p.category?.name?.toLowerCase().includes('accessori') ||
       p.category?.name?.toLowerCase().includes('jacket') ||
       p.name.toLowerCase().includes('jacket') ||
+      p.name.toLowerCase().includes('coat') ||
       p.name.toLowerCase().includes('watch') ||
       p.name.toLowerCase().includes('bag')
   );
 
-  // Select primary outfit components
-  const selectedTop = tops[0] || allInStock[0];
-  const selectedBottom = bottoms[0] || allInStock[1] || allInStock[0];
-  const selectedAccessory = accessories[0] || allInStock[2] || allInStock[0];
+  const selectedTop = tops[0] || allProducts[0];
+  const selectedBottom = bottoms[0] || allProducts[1] || allProducts[0];
+  const selectedAccessory = accessories[0] || allProducts[2] || allProducts[0];
 
   const totalPrice =
     (selectedTop?.price || 0) + (selectedBottom?.price || 0) + (selectedAccessory?.price || 0);
@@ -159,7 +188,7 @@ const generateOutfitBundleFromDB = async ({ occasion = 'Casual', gender = 'Unise
       { role: 'Jacket & Accessories', product: selectedAccessory },
     ].filter((item) => item.product != null),
     bundleTotalPrice: totalPrice,
-    savingsPercentage: 15, // Bundle discount percentage
+    savingsPercentage: 15,
     bundleDiscountedPrice: Math.round(totalPrice * 0.85),
   };
 };
@@ -182,8 +211,6 @@ const parseNaturalLanguageSearch = async (queryText) => {
   // Build MongoDB query
   const dbQuery = {
     isDeleted: { $ne: true },
-    availability: true,
-    stockQuantity: { $gt: 0 },
   };
 
   if (maxPrice) {
@@ -204,10 +231,17 @@ const parseNaturalLanguageSearch = async (queryText) => {
     ];
   }
 
-  const results = await Product.find(dbQuery)
+  let results = await Product.find(dbQuery)
     .populate('category', 'name')
     .sort({ ratings: -1 })
     .limit(12);
+
+  if (!results || results.length === 0) {
+    results = await Product.find({ isDeleted: { $ne: true } })
+      .populate('category', 'name')
+      .sort({ ratings: -1 })
+      .limit(8);
+  }
 
   return results;
 };
@@ -261,3 +295,4 @@ module.exports = {
   COLOR_HARMONY_MAP,
   BODY_FIT_MAP,
 };
+
