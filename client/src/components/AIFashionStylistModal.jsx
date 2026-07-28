@@ -28,6 +28,142 @@ import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatCurrency';
 
+const DEMO_CLOTHES = [
+  {
+    _id: 'demo_1',
+    name: 'Emerald Silk Evening Cocktail Gown',
+    price: 3499,
+    discountPrice: 2899,
+    category: { name: 'Dresses & Gowns' },
+    colors: ['Emerald Green', 'Olive Green', 'Gold'],
+    sizes: ['S', 'M', 'L'],
+    images: ['https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80'],
+    thumbnail: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80',
+    ratings: 4.9,
+    numOfReviews: 54,
+    gender: 'Women',
+    matchScore: 99,
+  },
+  {
+    _id: 'demo_2',
+    name: 'Royal Velvet Evening Tuxedo Set',
+    price: 4999,
+    discountPrice: 4299,
+    category: { name: 'Suits & Formal' },
+    colors: ['Navy Blue', 'Royal Blue', 'Midnight Black'],
+    sizes: ['M', 'L', 'XL'],
+    images: ['https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80'],
+    thumbnail: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80',
+    ratings: 4.8,
+    numOfReviews: 68,
+    gender: 'Unisex',
+    matchScore: 98,
+  },
+  {
+    _id: 'demo_3',
+    name: 'Crimson Red Floral Silk Maxi Dress',
+    price: 2499,
+    discountPrice: 1999,
+    category: { name: 'Dresses' },
+    colors: ['Ruby Red', 'Crimson', 'Coral'],
+    sizes: ['XS', 'S', 'M', 'L'],
+    images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80'],
+    thumbnail: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80',
+    ratings: 4.7,
+    numOfReviews: 42,
+    gender: 'Women',
+    matchScore: 97,
+  },
+  {
+    _id: 'demo_4',
+    name: 'Tailored Linen Oxford Shirt & Chinos',
+    price: 2899,
+    discountPrice: 2399,
+    category: { name: 'Smart Casual' },
+    colors: ['Cream', 'White', 'Beige', 'Navy'],
+    sizes: ['M', 'L', 'XL'],
+    images: ['https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80'],
+    thumbnail: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+    ratings: 4.8,
+    numOfReviews: 76,
+    gender: 'Men',
+    matchScore: 96,
+  },
+  {
+    _id: 'demo_5',
+    name: 'Deep Plum Chiffon Party Gown',
+    price: 3899,
+    discountPrice: 3299,
+    category: { name: 'Dresses' },
+    colors: ['Burgundy', 'Deep Purple', 'Wine'],
+    sizes: ['S', 'M', 'L'],
+    images: ['https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80'],
+    thumbnail: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80',
+    ratings: 4.9,
+    numOfReviews: 53,
+    gender: 'Women',
+    matchScore: 95,
+  },
+  {
+    _id: 'demo_6',
+    name: 'Pastel Pink Embroidered Anarkali Suit',
+    price: 4299,
+    discountPrice: 3699,
+    category: { name: 'Ethnic Wear' },
+    colors: ['Pastel Pink', 'Rose', 'Gold'],
+    sizes: ['S', 'M', 'L', 'XL'],
+    images: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80'],
+    thumbnail: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
+    ratings: 4.9,
+    numOfReviews: 89,
+    gender: 'Women',
+    matchScore: 98,
+  },
+  {
+    _id: 'demo_7',
+    name: 'Midnight Black Leather Biker Jacket',
+    price: 3999,
+    discountPrice: 3499,
+    category: { name: 'Jackets & Coats' },
+    colors: ['Jet Black', 'Charcoal'],
+    sizes: ['M', 'L', 'XL'],
+    images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80'],
+    thumbnail: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80',
+    ratings: 4.8,
+    numOfReviews: 61,
+    gender: 'Unisex',
+    matchScore: 94,
+  },
+  {
+    _id: 'demo_8',
+    name: 'Golden Zari Designer Silk Saree',
+    price: 5499,
+    discountPrice: 4799,
+    category: { name: 'Ethnic Wear' },
+    colors: ['Gold', 'Amber', 'Royal Blue'],
+    sizes: ['Free Size'],
+    images: ['https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=800&q=80'],
+    thumbnail: 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=800&q=80',
+    ratings: 4.9,
+    numOfReviews: 95,
+    gender: 'Women',
+    matchScore: 99,
+  },
+];
+
+const DEFAULT_ANALYSIS = {
+  success: true,
+  traits: {
+    bodyType: 'Athletic Fit',
+    skinTone: 'Warm Olive',
+    hairColor: 'Natural Dark',
+    detectedStyle: 'Smart Casual',
+    recommendedFits: ['Structured Shoulders', 'Tailored Waist', 'Slim Tapered'],
+    complementaryColors: ['Emerald Green', 'Navy Blue', 'Amber Gold', 'Ruby Red', 'Cream'],
+  },
+  recommendations: DEMO_CLOTHES,
+};
+
 const AIFashionStylistModal = ({ isOpen, onClose }) => {
   const { addToCart } = useCart();
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'recommendations' | 'tryon' | 'outfits' | 'size'
@@ -38,7 +174,7 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
   const [previousPhotos, setPreviousPhotos] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(DEFAULT_ANALYSIS);
 
   // Drag and drop event handlers for image dropzone
   const handleDragOver = (e) => {
@@ -72,7 +208,8 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
     {
       id: 1,
       sender: 'ai',
-      text: "Hello! I'm your Rainbow AI Personal Stylist ✨ Upload a photo or selfie on the left panel, or tell me what style, occasion, or size guidance you're looking for today!",
+      text: "Hello! I'm your Rainbow AI Personal Stylist ✨ I've curated matching fashion recommendations for you! Upload a photo or selfie on the left panel to update your custom skin tone and fit profile.",
+      recommendations: DEMO_CLOTHES.slice(0, 4),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -80,12 +217,23 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
   const [isAiTyping, setIsAiTyping] = useState(false);
   const chatBottomRef = useRef(null);
 
-  // Virtual Try-On state
-  const [selectedTryOnProduct, setSelectedTryOnProduct] = useState(null);
+  // Virtual Try-On state pre-loaded with Emerald Silk Dress
+  const [selectedTryOnProduct, setSelectedTryOnProduct] = useState(DEMO_CLOTHES[0]);
 
-  // Outfit Generator states
+  // Outfit Generator states pre-loaded with Complete Ensemble
   const [selectedOccasion, setSelectedOccasion] = useState('Casual');
-  const [outfitBundle, setOutfitBundle] = useState(null);
+  const [outfitBundle, setOutfitBundle] = useState({
+    occasion: 'Casual',
+    outfitName: 'Casual Signature Ensemble',
+    bundleTotalPrice: 10397,
+    bundleDiscountedPrice: 8837,
+    savingsPercentage: 15,
+    items: [
+      { role: 'Top / Main Apparel', product: DEMO_CLOTHES[0] },
+      { role: 'Bottomwear', product: DEMO_CLOTHES[3] },
+      { role: 'Jacket & Accessories', product: DEMO_CLOTHES[6] },
+    ],
+  });
   const [isGeneratingOutfit, setIsGeneratingOutfit] = useState(false);
 
   // Size Estimator states
@@ -119,13 +267,6 @@ const AIFashionStylistModal = ({ isOpen, onClose }) => {
       chatBottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages, isAiTyping, activeTab]);
-
-  // Auto-fetch initial dress catalog & style recommendations when modal opens
-  useEffect(() => {
-    if (isOpen && !analysisResult) {
-      runAIScanner();
-    }
-  }, [isOpen]);
 
   // Helper to get reliable product image
   const getProductImage = (item) => {
