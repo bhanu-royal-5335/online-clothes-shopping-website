@@ -28,7 +28,7 @@ jobs:
       - name: Install Server Dependencies
         run: |
           cd server
-          npm ci
+          npm install
 
       - name: Security Audit Server Packages
         run: |
@@ -38,7 +38,7 @@ jobs:
       - name: Install Client Dependencies
         run: |
           cd client
-          npm ci
+          npm install
 
       - name: Build Frontend Production SPA
         run: |
