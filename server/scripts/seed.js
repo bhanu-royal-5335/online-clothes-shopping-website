@@ -14,10 +14,56 @@ const Order = require('../models/Order');
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
+// High-resolution Unsplash fashion dress & apparel images
+const FASHION_IMAGES = [
+  'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1550639525-c97d455acf70?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1564557287817-3785e38ec1f5?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1548883354-7622d03aca27?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=800&q=80',
+];
+
+const DRESS_TYPES = [
+  'Emerald Satin Evening Gown', 'Crimson Floral Maxi Dress', 'Royal Velvet Cocktail Dress', 'Golden Zardozi Anarkali Dress',
+  'Deep Plum Chiffon Party Dress', 'Sapphire Blue Slip Dress', 'Pastel Pink Lehenga Dress', 'Midnight Black Bodycon Dress',
+  'Ivory Silk Bridal Gown', 'Ruby Red Halter Dress', 'Champagne Sequin Party Dress', 'Olive Linen Summer Sundress',
+  'Rose Gold Tiered Maxi Dress', 'Wine Velvet Wrap Dress', 'Turquoise Silk Kaftan Dress', 'Coral Floral Chiffon Dress',
+  'Lavender A-Line Party Dress', 'Maroon Embroidered Ethnic Gown', 'Blush Pink Organza Dress', 'Forest Green Cutout Dress',
+  'Pearl White Off-Shoulder Gown', 'Amber Metallic Pleated Dress', 'Dusty Rose Midi Cocktail Dress', 'Cobalt Blue High-Low Dress',
+  'Tangerine Silk Bandhani Dress', 'Plum Layered Ruffle Gown', 'Peacock Green Brocade Dress', 'Silver Sequin Backless Dress',
+  'Teal Crepe Mermaid Gown', 'Fuchsia Silk Sharara Set', 'Bronze Satin Bias-Cut Dress', 'Mauve Velvet Off-Shoulder Dress',
+  'Mint Green Georgette Gown', 'Burgundy Corset Evening Dress', 'Gold Metallic Draped Maxi Dress', 'Jade Green Floral Midi Dress',
+  'Scarlet Red One-Shoulder Dress', 'Navy Blue Chiffon Floor Gown', 'Lilac Embroidered Net Dress', 'Cream Silk Empire Waist Dress',
+];
+
+const SUIT_TYPES = [
+  'Royal Velvet Tuxedo Blazer', 'Italian Merino Wool Suit', 'Classic Navy Double-Breasted Suit', 'Charcoal Grey Tailored Blazer',
+  'Linen Summer Oxford Suit', 'Midnight Velvet Dinner Jacket', 'Emerald Green Slim Fit Blazer', 'Burgundy Satin Lapel Suit',
+  'Beige Italian Wool Blazer', 'Prince of Wales Checked Suit', 'Black Tie Formal Tuxedo Set', 'Ivory Wedding Groom Blazer',
+];
+
+const ETHNIC_TYPES = [
+  'Handcrafted Zardozi Silk Anarkali', 'Royal Kanjeevaram Silk Lehenga', 'Chikankari Georgette Kurta Set', 'Gold Threaded Brocade Suit',
+  'Bandhani Silk Flare Lehenga', 'Maroon Velvet Bridal Lehenga', 'Organza Embroidered Dupatta Suit', 'Pastel Pink Mirror Work Anarkali',
+];
+
+const BRANDS = ['Aurelia Lux', 'Sartoria Milano', 'Rainbow Couture', 'Vogue Luxe', 'Royal Threads', 'Zari & Silk'];
+const COLORS = ['Emerald Green', 'Royal Blue', 'Ruby Red', 'Midnight Black', 'Pastel Pink', 'Amber Gold', 'Navy Blue', 'Wine Burgundy', 'Champagne', 'Ivory White'];
+
 const seedData = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/smartcart');
-    console.log('Connected to MongoDB for seeding...');
+    console.log('Connected to MongoDB for seeding 150+ dress catalog...');
 
     // Clear existing collections
     await User.deleteMany({});
@@ -25,7 +71,6 @@ const seedData = async () => {
     await Product.deleteMany({});
     await Coupon.deleteMany({});
     await Order.deleteMany({});
-    console.log('Cleared existing database entries!');
 
     // 1. Seed Users
     const adminUser = await User.create({
@@ -44,272 +89,83 @@ const seedData = async () => {
       isVerified: true,
     });
 
-    console.log('Seeded User accounts:');
-    console.log(`- Admin: ${adminUser.email} (password: admin123password)`);
-    console.log(`- Customer: ${customerUser.email} (password: customer123password)`);
-
-    // 2. Seed Categories (Men, Women, Kids)
+    // 2. Seed 8 High-Fashion Categories
     const categoriesToSeed = [
-      {
-        name: 'Men',
-        slug: 'men',
-        description: 'Premium tailored suits, outerwear, trousers, and casual shirting for men',
-        image: 'https://images.unsplash.com/photo-1488161628813-04466f872be2?auto=format&fit=crop&w=400&q=80',
-      },
-      {
-        name: 'Women',
-        slug: 'women',
-        description: 'Elegant evening wear, trench coats, luxury knitwear, and dresses for women',
-        image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=400&q=80',
-      },
-      {
-        name: 'Kids',
-        slug: 'kids',
-        description: 'Soft organic cotton hoodies, playwear, and outerwear for children',
-        image: 'https://images.unsplash.com/photo-1519457431-44ccd64a579b?auto=format&fit=crop&w=400&q=80',
-      },
+      { name: 'Dresses & Gowns', slug: 'dresses', description: 'Evening gowns, cocktail dresses, satin slips, and maxi dresses', image: FASHION_IMAGES[0] },
+      { name: 'Ethnic Wear', slug: 'ethnic', description: 'Handcrafted Anarkalis, lehengas, sarees, and embroidered suits', image: FASHION_IMAGES[3] },
+      { name: 'Suits & Formal', slug: 'suits', description: 'Bespoke tuxedos, velvet blazers, and Italian wool suit sets', image: FASHION_IMAGES[4] },
+      { name: 'Party & Cocktail', slug: 'party', description: 'Sequin dresses, bodycon styles, metallic gowns, and partywear', image: FASHION_IMAGES[2] },
+      { name: 'Smart Casual', slug: 'casual', description: 'Silk shirts, linen blouses, tailored oxford tops, and knits', image: FASHION_IMAGES[5] },
+      { name: 'Bottomwear & Pants', slug: 'bottoms', description: 'Chinos, wide-leg trousers, denim jeans, and flared skirts', image: FASHION_IMAGES[7] },
+      { name: 'Outerwear & Coats', slug: 'outerwear', description: 'Cashmere trench coats, leather jackets, and winter coats', image: FASHION_IMAGES[8] },
+      { name: 'Luxury Accessories', slug: 'accessories', description: 'Designer handbags, silk scarves, heels, and jewelry', image: FASHION_IMAGES[9] },
     ];
 
     const seededCategories = await Category.insertMany(categoriesToSeed);
-    console.log(`Seeded ${seededCategories.length} product categories.`);
-
-    // Map categories by slug for convenient product assignment
     const catMap = {};
-    seededCategories.forEach((c) => {
-      catMap[c.slug] = c._id;
-    });
+    seededCategories.forEach((c) => { catMap[c.slug] = c._id; });
 
-    // 3. Seed Products (Premium Clothing & Fashion)
-    const productsToSeed = [
-      {
-        name: 'Premium Cashmere Trench Coat',
-        description: 'Crafted from the finest 100% Mongolian cashmere. Features double-breasted button panels, adjustable waist tie, and premium silk inner lining for supreme cold-weather styling.',
-        category: catMap['women'],
-        subcategory: 'Outerwear',
-        brand: 'Aurelia Lux',
-        price: 349.99,
-        discountPrice: 299.99,
-        sku: 'RAIN-COAT-001',
-        stockQuantity: 15,
-        sizes: ['S', 'M', 'L', 'XL'],
-        colors: ['Camel', 'Beige', 'Black'],
-        material: '100% Cashmere',
-        gender: 'Women',
-        images: [
-          'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=600&q=80',
-        ],
-        specifications: [
-          { key: 'Material', value: '100% Cashmere' },
-          { key: 'Lining', value: '100% Mulberry Silk' },
-          { key: 'Dry Clean Only', value: 'Yes' },
-        ],
-        weight: '1.4kg',
-        dimensions: { length: '110 cm', width: '50 cm', height: '5 cm' },
-        featured: true,
-      },
-      {
-        name: 'Tailored Italian Wool Suit',
-        description: 'Impeccable slim-fit two-piece suit tailored from Super 120s Italian wool. Includes a fully lined double-vented jacket and flat-front matching suit trousers.',
-        category: catMap['men'],
-        subcategory: 'Formal Wear',
-        brand: 'Sartoria',
-        price: 599.99,
-        sku: 'RAIN-SUIT-002',
-        stockQuantity: 8,
-        sizes: ['M', 'L', 'XL'],
-        colors: ['Navy', 'Charcoal', 'Black'],
-        material: '100% Italian Merino Wool',
-        gender: 'Men',
-        images: [
-          'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=600&q=80',
-        ],
-        specifications: [
-          { key: 'Fabric Grade', value: 'Super 120s' },
-          { key: 'Tailoring Fit', value: 'Slim Fit' },
-          { key: 'Origin', value: 'Made in Italy' },
-        ],
-        weight: '1.8kg',
-        dimensions: { length: '80 cm', width: '60 cm', height: '10 cm' },
-        featured: true,
-      },
-      {
-        name: 'Classic Silk Evening Gown',
-        description: 'An elegant floor-length evening gown cut from double-faced mulberry silk. Beautifully flows with a cowl neckline and an open cross-back design.',
-        category: catMap['women'],
-        subcategory: 'Dresses',
-        brand: 'Aurelia Lux',
-        price: 450.0,
-        discountPrice: 380.0,
-        sku: 'RAIN-DRESS-003',
-        stockQuantity: 12,
-        sizes: ['XS', 'S', 'M', 'L'],
-        colors: ['Emerald', 'Ruby Red', 'Midnight Black'],
-        material: '100% Mulberry Silk',
-        gender: 'Women',
-        images: [
-          'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=600&q=80',
-        ],
-        specifications: [
-          { key: 'Fabric Type', value: '100% Mulberry Silk' },
-          { key: 'Closure', value: 'Concealed Side Zipper' },
-          { key: 'Length', value: 'Floor Length (150 cm)' },
-        ],
-        weight: '600g',
-        dimensions: { length: '150 cm', width: '45 cm', height: '2 cm' },
-        featured: true,
-      },
-      {
-        name: 'Kids Organic Cotton Hoodie',
-        description: 'Ultra-soft children\'s hoodie crafted from certified organic cotton fleece. Finished with flatlock stitch comfort seams and a double-lined cozy hood.',
-        category: catMap['kids'],
-        subcategory: 'Activewear',
-        brand: 'TinyThreads',
-        price: 49.99,
-        sku: 'RAIN-KID-004',
-        stockQuantity: 50,
-        sizes: ['S', 'M', 'L'],
-        colors: ['Mustard Yellow', 'Forest Green', 'Ocean Blue'],
-        material: '100% Organic Cotton',
-        gender: 'Kids',
-        images: [
-          'https://images.unsplash.com/photo-1519457431-44ccd64a579b?auto=format&fit=crop&w=600&q=80',
-        ],
-        specifications: [
-          { key: 'Fabric', value: '100% Certified Organic Cotton' },
-          { key: 'Knit Type', value: 'Heavyweight Fleece' },
-          { key: 'Safety Checks', value: 'OEKO-TEX Standard 100 Certified' },
-        ],
-        weight: '350g',
-        dimensions: { length: '50 cm', width: '40 cm', height: '3 cm' },
-        featured: false,
-      },
-      {
-        name: 'Tailored Slim Fit Chinos',
-        description: 'Perfect for business casual days. Made from fine combed cotton twill with added elastane stretch. Features side slash pockets and rear welt pockets.',
-        category: catMap['men'],
-        subcategory: 'Trousers',
-        brand: 'Sartoria',
-        price: 89.99,
-        discountPrice: 69.99,
-        sku: 'RAIN-PANTS-005',
-        stockQuantity: 30,
-        sizes: ['30', '32', '34', '36'],
-        colors: ['Khaki', 'Olive Green', 'Navy Blue'],
-        material: '98% Cotton, 2% Elastane',
-        gender: 'Men',
-        images: [
-          'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=600&q=80',
-        ],
-        specifications: [
-          { key: 'Weave', value: 'Combed Twill' },
-          { key: 'Stretch', value: '2% Lycra/Elastane' },
-          { key: 'Fit', value: 'Modern Slim Fit' },
-        ],
-        weight: '550g',
-        dimensions: { length: '102 cm', width: '40 cm', height: '2 cm' },
-        featured: true,
-      },
-      {
-        name: 'Linen Summer Button-Down',
-        description: 'Lightweight and highly breathable summer shirt woven from premium flax linen. Soft washed finish prevents stiff wrinkles for styling on hot beach days.',
-        category: catMap['men'],
-        subcategory: 'Shirts',
-        brand: 'Sartoria',
-        price: 79.99,
-        sku: 'RAIN-SHIRT-006',
-        stockQuantity: 22,
-        sizes: ['S', 'M', 'L', 'XL'],
-        colors: ['White', 'Sky Blue', 'Sage Green'],
-        material: '100% Premium Flax Linen',
-        gender: 'Men',
-        images: [
-          'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=600&q=80',
-        ],
-        specifications: [
-          { key: 'Yarn', value: '100% Flax Linen' },
-          { key: 'Collar', value: 'Spread Collar' },
-          { key: 'Finish', value: 'Garment Washed for Softness' },
-        ],
-        weight: '220g',
-        dimensions: { length: '78 cm', width: '52 cm', height: '1.5 cm' },
-        featured: false,
-      },
-    ];
+    // 3. Generate 160 High-Fashion Products
+    const productsToSeed = [];
+    let skuCounter = 1000;
+
+    // Helper to generate catalog items
+    const generateCategoryProducts = (typeArray, categorySlug, basePrice, gender, count) => {
+      for (let i = 0; i < count; i++) {
+        skuCounter++;
+        const title = `${typeArray[i % typeArray.length]} - Edition ${Math.floor(i / typeArray.length) + 1}`;
+        const imgUrl = FASHION_IMAGES[i % FASHION_IMAGES.length];
+        const price = basePrice + (i * 150) % 2500;
+        const discountPrice = Math.round(price * 0.85);
+        const colorPrimary = COLORS[i % COLORS.length];
+
+        productsToSeed.push({
+          name: title,
+          description: `Exquisite ${title} crafted from premium haute couture fabric. Tailored for flawless drape, breathability, and day-to-night elegance. Matches with AI Vision recommendations (>90% accuracy).`,
+          category: catMap[categorySlug] || catMap['dresses'],
+          subcategory: categorySlug.toUpperCase(),
+          brand: BRANDS[i % BRANDS.length],
+          price: price,
+          discountPrice: discountPrice,
+          sku: `RF-DRESS-${skuCounter}`,
+          stockQuantity: 15 + (i % 20),
+          sizes: ['XS', 'S', 'M', 'L', 'XL'],
+          colors: [colorPrimary, COLORS[(i + 1) % COLORS.length], COLORS[(i + 2) % COLORS.length]],
+          material: i % 2 === 0 ? 'Pure Silk Satin' : 'Organic Chiffon & Cotton',
+          gender: gender,
+          images: [imgUrl, FASHION_IMAGES[(i + 1) % FASHION_IMAGES.length]],
+          thumbnail: imgUrl,
+          ratings: parseFloat((4.5 + (i % 5) * 0.1).toFixed(1)),
+          numOfReviews: 12 + (i * 7) % 80,
+          featured: i % 4 === 0,
+        });
+      }
+    };
+
+    // 160 total products generated across categories
+    generateCategoryProducts(DRESS_TYPES, 'dresses', 2499, 'Women', 50);   // 50 Dresses & Gowns
+    generateCategoryProducts(ETHNIC_TYPES, 'ethnic', 3499, 'Women', 35);    // 35 Ethnic Wear
+    generateCategoryProducts(SUIT_TYPES, 'suits', 4499, 'Men', 25);         // 25 Suits & Blazers
+    generateCategoryProducts(DRESS_TYPES, 'party', 2999, 'Women', 25);      // 25 Party Dresses
+    generateCategoryProducts(DRESS_TYPES, 'casual', 1899, 'Unisex', 15);     // 15 Smart Casual
+    generateCategoryProducts(DRESS_TYPES, 'bottoms', 1499, 'Unisex', 10);    // 10 Bottomwear
 
     const seededProducts = await Product.insertMany(productsToSeed);
-    console.log(`Seeded ${seededProducts.length} catalogue products.`);
+    console.log(`✅ SUCCESS: Seeded ${seededProducts.length} high-fashion dresses & products into database!`);
 
-    // 4. Seed Coupons
-    const couponsToSeed = [
-      {
-        code: 'WELCOME10',
-        discountType: 'percent',
-        discountValue: 10,
-        minOrderValue: 50,
-        expiryDate: new Date(new Date().setDate(new Date().getDate() + 30)), // 30 days from now
-        isActive: true,
-      },
-      {
-        code: 'FLAT25',
-        discountType: 'flat',
-        discountValue: 25,
-        minOrderValue: 150,
-        expiryDate: new Date(new Date().setDate(new Date().getDate() + 15)), // 15 days from now
-        isActive: true,
-      },
-    ];
-
-    const seededCoupons = await Coupon.insertMany(couponsToSeed);
-    console.log(`Seeded ${seededCoupons.length} promotional coupons.`);
-
-    // 5. Seed some sample order histories
-    const orderItems = [
-      {
-        name: seededProducts[0].name,
-        qty: 1,
-        image: seededProducts[0].images[0],
-        price: seededProducts[0].price,
-        product: seededProducts[0]._id,
-      },
-      {
-        name: seededProducts[2].name,
-        qty: 1,
-        image: seededProducts[2].images[0],
-        price: seededProducts[2].price,
-        product: seededProducts[2]._id,
-      },
-    ];
-
-    // Historical completed order to show statistics
-    await Order.create({
-      user: customerUser._id,
-      orderItems,
-      shippingAddress: {
-        street: '456 Web Testing Ave',
-        city: 'Metropolis',
-        state: 'New York',
-        postalCode: '10001',
-        country: 'USA',
-      },
-      paymentMethod: 'cod',
-      itemsPrice: 679.99,
-      taxPrice: 54.4,
-      shippingPrice: 0.0, // Free over $100
-      discountPrice: 0.0,
-      totalPrice: 734.39,
-      isPaid: true,
-      paidAt: new Date(new Date().setDate(new Date().getDate() - 2)),
-      orderStatus: 'delivered',
-      deliveredAt: new Date(new Date().setDate(new Date().getDate() - 1)),
+    // 4. Seed Demo Coupons
+    await Coupon.create({
+      code: 'WELCOME10',
+      discountType: 'percent',
+      discountValue: 10,
+      minOrderValue: 500,
+      expiryDate: new Date('2028-12-31'),
     });
 
-    console.log('Seeded sample order logs for financial dashboards.');
-
-    console.log('Seeding complete! Closing connection...');
-    await mongoose.connection.close();
+    console.log('Seeded database successfully with 150+ dresses catalog!');
     process.exit(0);
   } catch (error) {
-    console.error('Seeding error occurred:', error);
+    console.error('Database seeding error:', error);
     process.exit(1);
   }
 };
