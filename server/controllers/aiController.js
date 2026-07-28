@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const {
   analyzeImageTraits,
   recommendProductsFromDB,
@@ -7,6 +8,14 @@ const {
 } = require('../services/aiStylistService');
 const AIRecommendationLog = require('../models/AIRecommendationLog');
 const Product = require('../models/Product');
+
+// Helper to filter valid Mongoose ObjectIds for recommendation logging
+const filterValidObjectIds = (ids) => {
+  if (!Array.isArray(ids)) return [];
+  return ids
+    .map((id) => (id && id._id ? id._id : id))
+    .filter((id) => id && mongoose.Types.ObjectId.isValid(id));
+};
 
 // @desc    Analyze uploaded user photo & recommend matching in-stock store products
 // @route   POST /api/ai/analyze-image
@@ -28,19 +37,23 @@ const analyzeImage = async (req, res) => {
       limit: 8,
     });
 
-    // Step 3: Log recommendation event for admin analytics
-    await AIRecommendationLog.create({
-      user: req.user ? req.user._id : null,
-      analysisType: 'image_analysis',
-      detectedTraits: {
-        bodyType,
-        skinTone,
-        detectedStyle,
-        primaryColors: analysis.traits.complementaryColors,
-      },
-      occasion: req.body.occasion || 'Casual',
-      recommendedProductIds: recommendations.map((p) => p._id),
-    });
+    // Step 3: Non-blocking log recommendation event for admin analytics
+    try {
+      await AIRecommendationLog.create({
+        user: req.user ? req.user._id : null,
+        analysisType: 'image_analysis',
+        detectedTraits: {
+          bodyType,
+          skinTone,
+          detectedStyle,
+          primaryColors: analysis.traits.complementaryColors,
+        },
+        occasion: req.body.occasion || 'Casual',
+        recommendedProductIds: filterValidObjectIds(recommendations.map((p) => p._id)),
+      });
+    } catch (logErr) {
+      console.error('Non-fatal AI log creation error:', logErr.message);
+    }
 
     res.json({
       success: true,
@@ -62,12 +75,16 @@ const generateOutfit = async (req, res) => {
 
     const bundle = await generateOutfitBundleFromDB({ occasion, gender });
 
-    await AIRecommendationLog.create({
-      user: req.user ? req.user._id : null,
-      analysisType: 'outfit_generation',
-      occasion,
-      recommendedProductIds: bundle.items.map((i) => i.product._id).filter(Boolean),
-    });
+    try {
+      await AIRecommendationLog.create({
+        user: req.user ? req.user._id : null,
+        analysisType: 'outfit_generation',
+        occasion,
+        recommendedProductIds: filterValidObjectIds(bundle.items.map((i) => i.product?._id)),
+      });
+    } catch (logErr) {
+      console.error('Non-fatal AI log creation error:', logErr.message);
+    }
 
     res.json({
       success: true,
@@ -91,12 +108,16 @@ const naturalLanguageSearch = async (req, res) => {
 
     const results = await parseNaturalLanguageSearch(query);
 
-    await AIRecommendationLog.create({
-      user: req.user ? req.user._id : null,
-      analysisType: 'natural_search',
-      naturalQuery: query,
-      recommendedProductIds: results.map((p) => p._id),
-    });
+    try {
+      await AIRecommendationLog.create({
+        user: req.user ? req.user._id : null,
+        analysisType: 'natural_search',
+        naturalQuery: query,
+        recommendedProductIds: filterValidObjectIds(results.map((p) => p._id)),
+      });
+    } catch (logErr) {
+      console.error('Non-fatal AI log creation error:', logErr.message);
+    }
 
     res.json({
       success: true,
