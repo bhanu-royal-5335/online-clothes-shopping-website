@@ -18,6 +18,7 @@ import {
   PackageCheck,
   LayoutGrid,
   Sparkles,
+  ShoppingBag,
 } from 'lucide-react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
