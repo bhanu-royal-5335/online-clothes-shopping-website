@@ -188,7 +188,16 @@ const Navbar = () => {
           </div>
 
           {/* Right Action Icons */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* AI Stylist Mobile Header Button */}
+            <button
+              onClick={() => setAiModalOpen(true)}
+              className="md:hidden bg-gradient-to-r from-amber-500/20 to-primary-600/20 border border-amber-500/50 text-amber-400 font-extrabold text-[11px] px-2.5 py-1 rounded-full flex items-center space-x-1 shadow-sm active:scale-95 transition-transform"
+            >
+              <Sparkles className="h-3.5 w-3.5 animate-pulse text-amber-400" />
+              <span>AI Stylist</span>
+            </button>
+
             {/* Live Multi-Currency Switcher */}
             <CurrencySelector />
 
@@ -196,8 +205,9 @@ const Navbar = () => {
             <button
               onClick={() => setDarkMode(!darkMode)}
               className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {darkMode ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5 text-slate-600" />}
             </button>
 
             {/* Wishlist Link */}
@@ -207,10 +217,7 @@ const Navbar = () => {
               title="My Wishlist"
             >
               <Heart className="h-5 w-5" />
-              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {darkMode ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5 text-slate-600" />}
-            </button>
+            </Link>
 
             {/* Cart Icon & Counter Badge */}
             <Link
