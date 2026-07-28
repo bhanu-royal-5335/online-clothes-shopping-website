@@ -34,6 +34,17 @@ function App() {
     setShowSplash(false);
   };
 
+  // Fail-safe safety timer to guarantee website always opens in <= 3s
+  useEffect(() => {
+    if (showSplash) {
+      const safetyTimer = setTimeout(() => {
+        sessionStorage.setItem('hasSeenOpeningSplash', 'true');
+        setShowSplash(false);
+      }, 3000);
+      return () => clearTimeout(safetyTimer);
+    }
+  }, [showSplash]);
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0b0f19] dark:text-slate-100 transition-colors duration-300 relative">
       {/* 0. High-End Opening Entrance Splash Animation */}

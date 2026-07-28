@@ -1,31 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Crown, ArrowRight, Zap, ShieldCheck, Layers, Eye } from 'lucide-react';
 
 const OpeningSplash = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState(0); // 0: Core Ignition, 1: AI Calibration, 2: Grand Reveal
+  const onCompleteRef = useRef(onComplete);
 
   useEffect(() => {
-    // Smooth 5-second progress counter (50ms * 100 = 5000ms)
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    // Smooth 2.5-second progress counter (25ms * 100 = 2500ms)
     const timer = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(timer);
           return 100;
         }
-        return prev + 1;
+        return prev + 2;
       });
-    }, 50);
+    }, 25);
 
     // Multi-phase stage progression triggers
-    const stage1 = setTimeout(() => setStage(1), 1600);
-    const stage2 = setTimeout(() => setStage(2), 3400);
+    const stage1 = setTimeout(() => setStage(1), 700);
+    const stage2 = setTimeout(() => setStage(2), 1600);
 
-    // Auto complete callback at 5.5 seconds
+    // Auto complete callback at 2.6 seconds
     const doneTimer = setTimeout(() => {
-      if (onComplete) onComplete();
-    }, 5500);
+      if (onCompleteRef.current) onCompleteRef.current();
+    }, 2600);
 
     return () => {
       clearInterval(timer);
@@ -33,7 +38,7 @@ const OpeningSplash = ({ onComplete }) => {
       clearTimeout(stage2);
       clearTimeout(doneTimer);
     };
-  }, [onComplete]);
+  }, []);
 
   return (
     <motion.div
